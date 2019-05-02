@@ -17,6 +17,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import geopy as geopy
+from geopy.geocoders import Nominatim
 import datetime as datetime
 
 data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\NYPD_Collisions\\NYPD_Motor_Vehicle_Collisions.csv")
@@ -39,12 +40,26 @@ print( data.isnull().values.any() )
 print('Data Show Columns:\n')
 print(data.columns)
 
+# make the column names reference-friendly
+data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
+
 ### We know there are empty values - let's try our best to fill them out
+
+geolocator = Nominatim(user_agent="specify_your_app_name_here")
+location = geolocator.reverse("52.509669, 13.376294")
+print(location.address)
 
 ### Problem 1: Number of injuries up until 12/31/2018
 
 # convert date strings to datetime type ; then find entries before the date
 endDate = '12/31/2018'
-mask =  ( pd.to_datetime(data['DATE']) <= endDate ) 
-print(mask.sum())
+mask =  ( pd.to_datetime(data['date']) <= endDate ) 
+print( data.number_of_persons_injured[mask].sum() )
+
+# answer is 368034
+
+### Problem 2: Proportion of all collisions in 2016 occured in Brooklyn (exclude Null Boroughs)
+
+indexValidBorough = data.borough.notnull()
+
 
