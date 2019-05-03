@@ -2,11 +2,14 @@
 """
 Created on Thu May  2 10:36:11 2019
 
- Dataset from: https://www.kaggle.com/ronitf/heart-disease-uci
+ Dataset from: https://data.cityofnewyork.us/Public-Safety/NYPD-Motor-Vehicle-Collisions/h9gi-nx95
 
- Objective: 
+ Objective: Load, clean, preprocess NYPD collision reports to examine summary 
+     and specific data analytics
 
  Author: Zhe Charles Zhou
+ 
+ Note: Wow, this project is really fun to work out. Especially using the geopy module
 
 """
 
@@ -43,13 +46,7 @@ print('Data Show Columns:\n')
 # make the column names reference-friendly
 data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
 
-### We know there are empty values - let's try our best to fill them out
-
-geolocator = Nominatim(user_agent="specify_your_app_name_here")
-location = geolocator.reverse("40.66605, -73.81525")
-print(location.address)
-
-### Problem 1: Number of injuries up until 12/31/2018
+##### Problem 1: Number of injuries up until 12/31/2018
 
 # convert date strings to datetime type ; then find entries before the date
 endDate = '12/31/2018'
@@ -59,22 +56,33 @@ print( data.number_of_persons_injured[mask].sum() )
 print(mask.head()) # DELETE__
 # answer is 368034
 
-### Problem 2: Proportion of all collisions in 2016 occured in Brooklyn (exclude Null Boroughs)
+###### Problem 2: Proportion of all collisions in 2016 occured in Brooklyn (exclude Null Boroughs)
 startDate = '01/01/2016'
 endDate = '12/31/2016'
 
+# generate boolean vectors based on how we want to filter the data
 indexValidBorough = data.borough.notnull() 
 indexBrooklyn = data.borough == 'BROOKLYN'
 index2016 = (dateTimeData >= startDate) & ( dateTimeData <= endDate ) 
 mergedBool = indexBrooklyn & indexValidBorough & index2016
-print(indexValidBorough.head()) # DELETE__
-print(index2016.head()) # DELETE__
+
+
 print( 'Num Valid Boroughs: ' + str(np.sum(indexValidBorough)) )
 print( 'Num Collisons in Brooklyn: ' + str(np.sum(indexBrooklyn)) )
 print( 'Num Collisons in 2016: ' + str(np.sum(index2016)) )
 print( 'Num Collisions in Brooklyn in 2016: ' + str(np.sum(mergedBool)) )
-propBrooklyn2016 = np.sum(mergedBool)/np.sum(index2016)
+propBrooklyn2016 = np.sum(mergedBool)/np.sum(index2016) # calculate proportion
 print( 'Proportion of Collisions in Brooklyn in 2016: ' + str(propBrooklyn2016) )
+
+###### We know there are empty values - let's try our best to fill them out
+
+## First start out with finding missing Borough names
+geolocator = Nominatim(user_agent="specify_your_app_name_here")
+
+
+
+location = geolocator.reverse("40.66605, -73.81525")
+print(location.address)
 
 ### Problem 3 : 
 
