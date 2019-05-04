@@ -52,8 +52,8 @@ data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
 ##### Problem 1: Number of injuries up until 12/31/2018
 
 # convert date strings to datetime type ; then find entries before the date
-#endDate = '12/31/2018'
-#dateTimeData = pd.to_datetime(data['date'])
+endDate = '12/31/2018'
+dateTimeData = pd.to_datetime(data['date']) # convert date strings to datetime
 #mask =  ( dateTimeData <= endDate ) 
 #print( data.number_of_persons_injured[mask].sum() )
 #print(mask.head()) # DELETE__
@@ -113,7 +113,19 @@ for i in range(0,numSamps-1):
 
 ### Problem 3 : 
 
+startDate = '01/01/2016'
+endDate = '12/31/2016'
 
+# generate boolean vectors based on how we want to filter the data
 
+boolCycleInjured = data.number_of_cyclist_injured >= 1
+boolCycleKilled = data.number_of_cyclist_killed >= 1
 
+boolCycleInjuredKilled = boolCycleInjured | boolCycleKilled
+index2016 = (dateTimeData >= startDate) & ( dateTimeData <= endDate ) 
+
+boolCycleInjuredKilled_2016 = boolCycleInjuredKilled & index2016
+print( np.sum(boolCycleInjuredKilled_2016) / np.sum(index2016) )
+
+### Problem 4 : 
 
