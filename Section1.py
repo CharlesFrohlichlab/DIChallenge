@@ -90,8 +90,8 @@ for i in range(3): #(0,numSamps):
     if emptyBorough[i] == True:
         print(i)
         thisLoc = str( data.location[i] )
-        #print(thisLoc)
-        location = geolocator.reverse(thisLoc) # grab location data from coords
+        #print(thisLoc[1:-1])
+        location = geolocator.reverse(thisLoc[1:-1]) # grab location data from coords
         splitString = location.address.split(",") # split the address name
         countySplit = splitString[3].split() # get rid of "county" part of string
         #print(countySplit[0].upper()) # caps the county name
