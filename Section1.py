@@ -30,7 +30,10 @@ data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\NYPD_Collision
 print('Data First 5 Rows Show\n')
 print(data.head(5))
 
-print(data.shape)
+dataDims = data.shape
+numSamps = dataDims[0]
+numColumns = dataDims[1]
+print(numSamps)
 
 print('Are there NaN/Empty entries in the CSV?')
 print( data.isnull().values.any() )
@@ -49,11 +52,11 @@ data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
 ##### Problem 1: Number of injuries up until 12/31/2018
 
 # convert date strings to datetime type ; then find entries before the date
-endDate = '12/31/2018'
-dateTimeData = pd.to_datetime(data['date'])
-mask =  ( dateTimeData <= endDate ) 
-print( data.number_of_persons_injured[mask].sum() )
-print(mask.head()) # DELETE__
+#endDate = '12/31/2018'
+#dateTimeData = pd.to_datetime(data['date'])
+#mask =  ( dateTimeData <= endDate ) 
+#print( data.number_of_persons_injured[mask].sum() )
+#print(mask.head()) # DELETE__
 # answer is 368034
 
 ###### Problem 2: Proportion of all collisions in 2016 occured in Brooklyn (exclude Null Boroughs)
@@ -79,10 +82,21 @@ print( 'Proportion of Collisions in Brooklyn in 2016: ' + str(propBrooklyn2016) 
 ## First start out with finding missing Borough names
 geolocator = Nominatim(user_agent="specify_your_app_name_here")
 
+emptyBorough = data.borough.isnull() 
 
+print(data.borough.head(5))
 
-location = geolocator.reverse("40.66605, -73.81525")
-print(location.address)
+for i in range(3): #(0,numSamps):
+    if emptyBorough[i] == True:
+        print(i)
+        thisLoc = str( data.location[i] )
+        #print(thisLoc)
+        location = geolocator.reverse(thisLoc) # grab location data from coords
+        splitString = location.address.split(",") # split the address name
+        countySplit = splitString[3].split() # get rid of "county" part of string
+        #print(countySplit[0].upper()) # caps the county name
+        data.borough[i] = countySplit[0].upper()
+        #print(data.borough[i])
 
 ### Problem 3 : 
 
