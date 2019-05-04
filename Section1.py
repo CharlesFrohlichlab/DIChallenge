@@ -183,3 +183,20 @@ slope = reg.coef_
 
 # Problem 7:
 
+multiVehColl = []
+thisMonthTotalColl = []
+for iMonth in range(1,13):
+   
+    # find entries for 2017 and for this month and calc total collisions
+    bool2017 = dateTimeData.dt.year == 2017 
+    boolMonth = dateTimeData.dt.month == iMonth
+    thisMonthTotalColl += [sum( bool2017 & boolMonth )]
+    
+    vehInfo = data.loc[bool2017 & boolMonth].iloc[:,24:29]
+    numVeh = vehInfo.notnull().sum(axis=1)
+    multiVehColl += [sum( numVeh >= 3 ) ] # first make bool vector of >2 coll; then sum trues
+
+from scipy.stats import chi2_contingency
+stat,p,dof,expected = chi2_contingency( [[multiVehColl[0],thisMonthTotalColl[0]  ] ,[multiVehColl[4], thisMonthTotalColl[4]]] )
+print('stat=%.10f p=%.5f' % (stat,p))
+
