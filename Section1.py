@@ -81,8 +81,8 @@ print( 'Proportion of Collisions in Brooklyn in 2016: ' + str(propBrooklyn2016) 
 
 # fill missing features by imputing
 from sklearn.impute import SimpleImputer
-imp = SimpleImputer(strategy="most_frequent")
-data.iloc[:,0:6] = imp.fit_transform(data.iloc[:,0:6])
+imp = SimpleImputer(missing_values=np.nan, strategy="most_frequent")
+data.iloc[:,2:9] = imp.fit_transform(data.iloc[:,2:9])
 
 ### First start out with finding missing Borough names
 #
@@ -144,5 +144,6 @@ for iBorough in population.borough:
     
     thisBoroughDat = data.loc[ (data['borough'] == iBorough) &  index2017 ]
     vehAlc2017 = thisBoroughDat.loc[ (data['contributing_factor_vehicle_1'] == 'Alcohol Involvement') | (data['contributing_factor_vehicle_2'] == 'Alcohol Involvement') ]
-    accPerCap.extend( vehAlc2017.shape[0] ) #/ population.loc[population.borough == iBorough]
+    accPerCap +=  [ vehAlc2017.shape[0]  / int(population.loc[population.borough == iBorough,'pop']) ]
     
+max(accPerCap)*100000
