@@ -26,13 +26,16 @@ import datetime as datetime
 data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\NYPD_Collisions\\NYPD_Motor_Vehicle_Collisions.csv")
 
 #We will list all the columns for all data. We check all columns.
-print('Data Show Columns:\n')
+#print('Data Show Columns:\n')
 #print(data.columns)
 
 # make the column names reference-friendly
 data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
 
-#Now, our data is loaded. We're writing the following snippet to see the loaded data. The purpose here is to see the top five of the loaded data.
+# zips are in floats and strings; make them homogenous - all floats
+data['zip_code'] = pd.to_numeric(data['zip_code'], errors='coerce')
+
+#Now, our data is loaded and cleaned. We're writing the following snippet to see the loaded data. The purpose here is to see the top five of the loaded data.
 
 print('Data First 5 Rows Show\n')
 print(data.head(5))
@@ -147,3 +150,36 @@ for iBorough in population.borough:
     accPerCap +=  [ vehAlc2017.shape[0]  / int(population.loc[population.borough == iBorough,'pop']) ]
     
 max(accPerCap)*100000
+
+### Problem 5 : 
+# needs datetime data from problem 1 and index2016 from problem 2
+
+zipTotVeh = []
+
+uniqueZips = data['zip_code'].unique()
+
+for iZip in uniqueZips:
+    
+    boolZip2016 = (data['zip_code'] == iZip) & index2016
+    
+    zipVehInfo = data.loc[boolZip2016].iloc[:,24:29]
+    numVeh = zipVehInfo.notnull().sum(axis=1)
+    zipTotVeh += [sum(numVeh)]
+
+print(max(zipTotVeh))
+
+# problem 6:
+from sklearn.linear_model import LinearRegression
+
+collByYear = []
+
+uniqueYears = dateTimeData.dt.year.unique()[1:] # get rid of 2019
+
+for iYear in uniqueYears:
+    collByYear += [sum(dateTimeData.dt.year == iYear)]
+
+reg = LinearRegression().fit(uniqueYears.reshape(-1, 1),  collByYear ) # (X,y)
+slope = reg.coef_
+
+# Problem 7:
+
