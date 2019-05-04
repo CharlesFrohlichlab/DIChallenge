@@ -80,23 +80,40 @@ print( 'Proportion of Collisions in Brooklyn in 2016: ' + str(propBrooklyn2016) 
 ###### We know there are empty values - let's try our best to fill them out
 
 ## First start out with finding missing Borough names
+
+# Use geopy to find full address based on coordinates
+# geocode sometimes times out - this solves this problem
+from geopy.exc import GeocoderTimedOut
+def do_geocode(coords):
+    try:
+        return geolocator.reverse(coords)
+    except GeocoderTimedOut:
+        return do_geocode(coords)
+
 geolocator = Nominatim(user_agent="specify_your_app_name_here")
+pd.options.mode.chained_assignment = None  # default='warn' - gets rid of warning from overwriting nans in dataframe
 
+# generate boolean vectors for entries without boroughs and that have coordinates
 emptyBorough = data.borough.isnull() 
+hasCoord = data.location.notnull() 
 
-print(data.borough.head(5))
+# print(data.borough.head(5)) __DELETE
 
-for i in range(3): #(0,numSamps):
-    if emptyBorough[i] == True:
-        print(i)
+for i in range(0,numSamps-1):
+    if (emptyBorough[i] == True) & (hasCoord[i] == True): # only fill in borough if missing and coordinates are present
+        #print(i)
         thisLoc = str( data.location[i] )
-        #print(thisLoc[1:-1])
-        location = geolocator.reverse(thisLoc[1:-1]) # grab location data from coords
+        #print(thisLoc[1:-1]) __DELETE
+        location = do_geocode(thisLoc[1:-1]) # grab location data from coords
         splitString = location.address.split(",") # split the address name
         countySplit = splitString[3].split() # get rid of "county" part of string
-        #print(countySplit[0].upper()) # caps the county name
-        data.borough[i] = countySplit[0].upper()
-        #print(data.borough[i])
+        #print(countySplit[0].upper()) # __DELETE
+        data.borough[i] = countySplit[0].upper() #  caps the county name 
+        #print(data.borough[i])  __DELETE
 
 ### Problem 3 : 
+
+
+
+
 
