@@ -25,6 +25,13 @@ import datetime as datetime
 
 data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\NYPD_Collisions\\NYPD_Motor_Vehicle_Collisions.csv")
 
+#We will list all the columns for all data. We check all columns.
+print('Data Show Columns:\n')
+#print(data.columns)
+
+# make the column names reference-friendly
+data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
+
 #Now, our data is loaded. We're writing the following snippet to see the loaded data. The purpose here is to see the top five of the loaded data.
 
 print('Data First 5 Rows Show\n')
@@ -41,13 +48,6 @@ print( data.isnull().values.any() )
 # Show summary analytics of data (eg. mean, std, min, max, etc)
 #print('Data Show Describe\n')
 #print(data.describe())
-
-#We will list all the columns for all data. We check all columns.
-print('Data Show Columns:\n')
-#print(data.columns)
-
-# make the column names reference-friendly
-data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
 
 ##### Problem 1: Number of injuries up until 12/31/2018
 
@@ -79,53 +79,76 @@ print( 'Proportion of Collisions in Brooklyn in 2016: ' + str(propBrooklyn2016) 
 
 ###### We know there are empty values - let's try our best to fill them out
 
-## First start out with finding missing Borough names
+# use KNN to fill missing features
 
-# Use geopy to find full address based on coordinates
-# geocode sometimes times out - this solves this problem
-from geopy.exc import GeocoderTimedOut
-def do_geocode(coords):
-    try:
-        return geolocator.reverse(coords)
-    except GeocoderTimedOut:
-        return do_geocode(coords)
+from fancyimpute import KNN # need visual C++ 14
+train_cols = list(data)
+# Use 5 nearest rows which have a feature to fill in each row's
+# missing features
+data = pd.DataFrame(KNN(k=5).fit_transform(data))
+data.columns = train_cols
 
-geolocator = Nominatim(user_agent="specify_your_app_name_here")
-pd.options.mode.chained_assignment = None  # default='warn' - gets rid of warning from overwriting nans in dataframe
-
-# generate boolean vectors for entries without boroughs and that have coordinates
-emptyBorough = data.borough.isnull() 
-hasCoord = data.location.notnull() 
-
-# print(data.borough.head(5)) __DELETE
-
-for i in range(0,numSamps-1):
-    if (emptyBorough[i] == True) & (hasCoord[i] == True): # only fill in borough if missing and coordinates are present
-        #print(i)
-        thisLoc = str( data.location[i] )
-        #print(thisLoc[1:-1]) __DELETE
-        location = do_geocode(thisLoc[1:-1]) # grab location data from coords
-        splitString = location.address.split(",") # split the address name
-        countySplit = splitString[3].split() # get rid of "county" part of string
-        #print(countySplit[0].upper()) # __DELETE
-        data.borough[i] = countySplit[0].upper() #  caps the county name 
-        #print(data.borough[i])  __DELETE
+### First start out with finding missing Borough names
+#
+## Use geopy to find full address based on coordinates
+## geocode sometimes times out - this solves this problem
+#from geopy.exc import GeocoderTimedOut
+#def do_geocode(coords):
+#    try:
+#        return geolocator.reverse(coords)
+#    except GeocoderTimedOut:
+#        return do_geocode(coords)
+#
+#geolocator = Nominatim(user_agent="specify_your_app_name_here")
+#pd.options.mode.chained_assignment = None  # default='warn' - gets rid of warning from overwriting nans in dataframe
+#
+## generate boolean vectors for entries without boroughs and that have coordinates
+#emptyBorough = data.borough.isnull() 
+#hasCoord = data.location.notnull() 
+#
+## print(data.borough.head(5)) __DELETE
+#
+#for i in range(0,numSamps-1):
+#    if (emptyBorough[i] == True) & (hasCoord[i] == True): # only fill in borough if missing and coordinates are present
+#        #print(i)
+#        thisLoc = str( data.location[i] )
+#        #print(thisLoc[1:-1]) __DELETE
+#        location = do_geocode(thisLoc[1:-1]) # grab location data from coords
+#        splitString = location.address.split(",") # split the address name
+#        countySplit = splitString[3].split() # get rid of "county" part of string
+#        #print(countySplit[0].upper()) # __DELETE
+#        data.borough[i] = countySplit[0].upper() #  caps the county name 
+#        #print(data.borough[i])  __DELETE
 
 ### Problem 3 : 
 
-startDate = '01/01/2016'
-endDate = '12/31/2016'
-
 # generate boolean vectors based on how we want to filter the data
-
+# we need index2016 from problem 1
 boolCycleInjured = data.number_of_cyclist_injured >= 1
 boolCycleKilled = data.number_of_cyclist_killed >= 1
 
 boolCycleInjuredKilled = boolCycleInjured | boolCycleKilled
-index2016 = (dateTimeData >= startDate) & ( dateTimeData <= endDate ) 
 
 boolCycleInjuredKilled_2016 = boolCycleInjuredKilled & index2016
 print( np.sum(boolCycleInjuredKilled_2016) / np.sum(index2016) )
 
 ### Problem 4 : 
 
+startDate = '01/01/2017'
+endDate = '12/31/2017'
+index2017 = (dateTimeData >= startDate) & ( dateTimeData <= endDate ) 
+accPerCap = [None] * 5
+
+toDf = [['BRONX',1471160],['BROOKLYN',2648771],['MANHATTAN',1664727],
+        ['QUEENS',2358582],['STATEN ISLAND',479458]]
+population = pd.DataFrame(toDf,columns=['borough', 'pop'])
+
+uniqueBoroughs = data['borough'].unique()
+
+bCount = 0
+for iBorough in uniqueBoroughs:
+    
+    thisBoroughDat = data.loc[ (data['borough'] == iBorough) &  index2017 ]
+    vehAlc2017 = thisBoroughDat.loc[ (data['contributing_factor_vehicle_1'] == 'Alcohol Involvement') | (data['contributing_factor_vehicle_2'] == 'Alcohol Involvement') ]
+    accPerCap[bCount] = vehAlc2017.shape[0] #/ population.loc[population.borough == iBorough]
+    bCount += 1
