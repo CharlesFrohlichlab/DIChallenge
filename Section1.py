@@ -79,14 +79,10 @@ print( 'Proportion of Collisions in Brooklyn in 2016: ' + str(propBrooklyn2016) 
 
 ###### We know there are empty values - let's try our best to fill them out
 
-# use KNN to fill missing features
-
-from fancyimpute import KNN # need visual C++ 14
-train_cols = list(data)
-# Use 5 nearest rows which have a feature to fill in each row's
-# missing features
-data = pd.DataFrame(KNN(k=5).fit_transform(data))
-data.columns = train_cols
+# fill missing features by imputing
+from sklearn.impute import SimpleImputer
+imp = SimpleImputer(strategy="most_frequent")
+data.iloc[:,0:6] = imp.fit_transform(data.iloc[:,0:6])
 
 ### First start out with finding missing Borough names
 #
@@ -137,18 +133,16 @@ print( np.sum(boolCycleInjuredKilled_2016) / np.sum(index2016) )
 startDate = '01/01/2017'
 endDate = '12/31/2017'
 index2017 = (dateTimeData >= startDate) & ( dateTimeData <= endDate ) 
-accPerCap = [None] * 5
+accPerCap = []
 
+# make a data frame of each borough's population at 2017 - from wikipedia
 toDf = [['BRONX',1471160],['BROOKLYN',2648771],['MANHATTAN',1664727],
         ['QUEENS',2358582],['STATEN ISLAND',479458]]
 population = pd.DataFrame(toDf,columns=['borough', 'pop'])
 
-uniqueBoroughs = data['borough'].unique()
-
-bCount = 0
-for iBorough in uniqueBoroughs:
+for iBorough in population.borough:
     
     thisBoroughDat = data.loc[ (data['borough'] == iBorough) &  index2017 ]
     vehAlc2017 = thisBoroughDat.loc[ (data['contributing_factor_vehicle_1'] == 'Alcohol Involvement') | (data['contributing_factor_vehicle_2'] == 'Alcohol Involvement') ]
-    accPerCap[bCount] = vehAlc2017.shape[0] #/ population.loc[population.borough == iBorough]
-    bCount += 1
+    accPerCap.extend( vehAlc2017.shape[0] ) #/ population.loc[population.borough == iBorough]
+    
