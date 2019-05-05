@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
 from sklearn.metrics import classification_report,confusion_matrix
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, roc_auc_score
 import os
 import warnings
 warnings.filterwarnings('ignore')
@@ -79,5 +79,40 @@ from sklearn.metrics import accuracy_score
 print('Optimized logistic regression performance: ',
       round(accuracy_score(yTest,pred),5)*100,'%')
 
+#### examine contribution of variables to win
 
+bestLR=LogisticRegression(C=1,penalty='l1',random_state=0)
+bestLR.fit(xTrain, yTrain)
 
+logCoefs = bestLR.coef_
+logCoefs[0,0:7]
+
+x_labels = ['Rank','CompScore','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg']
+plt.bar(columns_to_scale[0:8],logCoefs[0,0:8])
+plt.ylabel('Coef Score')
+plt.xticks(np.arange(8), x_labels)
+plt.title('Log Reg Coef Scores')
+
+#### calculate model performance
+
+# calculate predicted probability
+prob = logOptimal.predict_proba(xTest)[:,1]
+# calculate true and false pos 
+falsePos,truePos,thresh = roc_curve(yTest,prob)
+
+# ROC plot
+sns.set_style('whitegrid')
+plt.figure(figsize=(10,6))
+
+plt.plot(falsePos,truePos)
+plt.plot([0,1],ls='--')
+plt.plot([0,0],[1,0],c='.5')
+plt.plot([1,1],c='.5')
+
+plt.title('Receiver Operating Characteristic Curve')
+plt.ylabel('True positive rate')
+plt.xlabel('False positive rate')
+plt.show()
+
+#Calculate area under the curve
+roc_auc_score(yTest,prob)
