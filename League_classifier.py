@@ -7,6 +7,8 @@ Objective: Load and clean League of Legends game data to identify important
     because the goal of many players is to identify aspects of the game to improve
     on and the analyses outlined below is generalizable to all skill-based games
     and sports.
+    
+Data from: https://github.com/DoransLab/data/tree/master/champion_clustering
 
 @author: Zhe Charles Zhou
 """
