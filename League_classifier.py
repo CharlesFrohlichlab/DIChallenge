@@ -2,11 +2,16 @@
 """
 Created on Sat May  4 17:22:12 2019
 
-@author: Zhe
+Objective: Load and clean League of Legends game data to identify important 
+    game features that contribute and predict game outcome. This is important 
+    because the goal of many players is to identify aspects of the game to improve
+    on and the analyses outlined below is generalizable to all skill-based games
+    and sports.
+
+@author: Zhe Charles Zhou
 """
 
-
-### Import toolboxes
+#### Import toolboxes
 
 import numpy as np
 import pandas as pd
@@ -14,18 +19,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from datetime import datetime
-
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
 from sklearn.metrics import classification_report,confusion_matrix
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, roc_auc_score
-import os
 import warnings
 warnings.filterwarnings('ignore')
 
-### Load data
+#### Load data
 
 data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\NYPD_Collisions\\totalSup.csv")
 
@@ -85,7 +87,6 @@ bestLR=LogisticRegression(C=1,penalty='l1',random_state=0)
 bestLR.fit(xTrain, yTrain)
 
 logCoefs = bestLR.coef_
-logCoefs[0,0:7]
 
 x_labels = ['Rank','CompScore','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg']
 plt.bar(columns_to_scale[0:8],logCoefs[0,0:8])
@@ -99,20 +100,20 @@ plt.title('Log Reg Coef Scores')
 prob = logOptimal.predict_proba(xTest)[:,1]
 # calculate true and false pos 
 falsePos,truePos,thresh = roc_curve(yTest,prob)
+#Calculate area under the curve
+AUCscore = roc_auc_score(yTest,prob)
 
 # ROC plot
 sns.set_style('whitegrid')
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(8,5))
 
 plt.plot(falsePos,truePos)
 plt.plot([0,1],ls='--')
 plt.plot([0,0],[1,0],c='.5')
 plt.plot([1,1],c='.5')
 
-plt.title('Receiver Operating Characteristic Curve')
+plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy = ' + str(round(accuracy_score(yTest,pred),3)*100) + '%')
 plt.ylabel('True positive rate')
 plt.xlabel('False positive rate')
 plt.show()
 
-#Calculate area under the curve
-roc_auc_score(yTest,prob)
