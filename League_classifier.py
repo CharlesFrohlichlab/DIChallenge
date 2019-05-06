@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 
 #### Load data
 
-data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\NYPD_Collisions\\totalSup.csv")
+data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\totalSup.csv")
 
 # make the column names reference-friendly
 data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
