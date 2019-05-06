@@ -88,36 +88,36 @@ imp = SimpleImputer(missing_values=np.nan, strategy="most_frequent")
 data.iloc[:,2:9] = imp.fit_transform(data.iloc[:,2:9])
 
 ### First start out with finding missing Borough names
-#
-## Use geopy to find full address based on coordinates
-## geocode sometimes times out - this solves this problem
-#from geopy.exc import GeocoderTimedOut
-#def do_geocode(coords):
-#    try:
-#        return geolocator.reverse(coords)
-#    except GeocoderTimedOut:
-#        return do_geocode(coords)
-#
-#geolocator = Nominatim(user_agent="specify_your_app_name_here")
-#pd.options.mode.chained_assignment = None  # default='warn' - gets rid of warning from overwriting nans in dataframe
-#
-## generate boolean vectors for entries without boroughs and that have coordinates
-#emptyBorough = data.borough.isnull() 
-#hasCoord = data.location.notnull() 
-#
-## print(data.borough.head(5)) __DELETE
-#
-#for i in range(0,numSamps-1):
-#    if (emptyBorough[i] == True) & (hasCoord[i] == True): # only fill in borough if missing and coordinates are present
-#        #print(i)
-#        thisLoc = str( data.location[i] )
-#        #print(thisLoc[1:-1]) __DELETE
-#        location = do_geocode(thisLoc[1:-1]) # grab location data from coords
-#        splitString = location.address.split(",") # split the address name
-#        countySplit = splitString[3].split() # get rid of "county" part of string
-#        #print(countySplit[0].upper()) # __DELETE
-#        data.borough[i] = countySplit[0].upper() #  caps the county name 
-#        #print(data.borough[i])  __DELETE
+
+# Use geopy to find full address based on coordinates
+# geocode sometimes times out - this solves this problem
+from geopy.exc import GeocoderTimedOut
+def do_geocode(coords):
+    try:
+        return geolocator.reverse(coords)
+    except GeocoderTimedOut:
+        return do_geocode(coords)
+
+geolocator = Nominatim(user_agent="specify_your_app_name_here")
+pd.options.mode.chained_assignment = None  # default='warn' - gets rid of warning from overwriting nans in dataframe
+
+# generate boolean vectors for entries without boroughs and that have coordinates
+emptyBorough = data.borough.isnull() 
+hasCoord = data.location.notnull() 
+
+# print(data.borough.head(5)) __DELETE
+
+for i in range(0,numSamps-1):
+    if (emptyBorough[i] == True) & (hasCoord[i] == True): # only fill in borough if missing and coordinates are present
+        #print(i)
+        thisLoc = str( data.location[i] )
+        #print(thisLoc[1:-1]) __DELETE
+        location = do_geocode(thisLoc[1:-1]) # grab location data from coords
+        splitString = location.address.split(",") # split the address name
+        countySplit = splitString[3].split() # get rid of "county" part of string
+        #print(countySplit[0].upper()) # __DELETE
+        data.borough[i] = countySplit[0].upper() #  caps the county name 
+        #print(data.borough[i])  __DELETE
 
 ### Problem 3 : 
 
@@ -202,6 +202,33 @@ print('stat=%.10f p=%.5f' % (stat,p))
 
 # Problem 8:
 
-data.loc[bool2017].iloc[1,4]
+from geopy import distance
 
-plt.scatter()
+zips2017 = data.loc[bool2017].iloc[:,3]
+coords2017 = data.loc[bool2017].iloc[:,4:6]
+
+#plt.scatter(coords2017['latitude'],coords2017['longitude'])
+
+# get rid of outliers via std dev
+latStd = coords2017['latitude'].std()
+longStd = coords2017['longitude'].std()
+
+latMean = coords2017['latitude'].mean()
+longMean = coords2017['longitude'].mean()
+
+latThresh = latStd * 3
+longThresh = longStd * 3
+
+dropLat = abs( coords2017['latitude'] - latMean ) > latThresh
+dropLong = abs( coords2017['longitude'] - longMean ) > 0.2
+
+zips2017 
+coords2017 = coords2017.drop(coords2017[dropLat | dropLong].index)
+
+#plt.scatter(coords2017['latitude'],coords2017['longitude'])
+
+# find unique zips and loop through
+
+
+
+
