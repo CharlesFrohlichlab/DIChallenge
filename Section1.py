@@ -200,3 +200,8 @@ from scipy.stats import chi2_contingency
 stat,p,dof,expected = chi2_contingency( [[multiVehColl[0],thisMonthTotalColl[0]  ] ,[multiVehColl[4], thisMonthTotalColl[4]]] )
 print('stat=%.10f p=%.5f' % (stat,p))
 
+# Problem 8:
+
+data.loc[bool2017].iloc[1,4]
+
+plt.scatter()

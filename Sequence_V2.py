@@ -13,9 +13,9 @@
  
 """
 
-k = 2281
-n = 347
-j = 1
+k = 2281 # change this for upper bound of the range of integers that can be used
+n = 347 # change this for the number of digits in the sequence
+j = 1 # change this for the last digit number
 
 num = (k-2)*(k-1)
 
