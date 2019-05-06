@@ -203,6 +203,7 @@ print('stat=%.10f p=%.5f' % (stat,p))
 # Problem 8:
 
 from geopy import distance
+import math
 
 zips2017 = data.loc[bool2017].iloc[:,3]
 coords2017 = data.loc[bool2017].iloc[:,4:6]
@@ -220,15 +221,36 @@ latThresh = latStd * 3
 longThresh = longStd * 3
 
 dropLat = abs( coords2017['latitude'] - latMean ) > latThresh
-dropLong = abs( coords2017['longitude'] - longMean ) > 0.2
+dropLong = abs( coords2017['longitude'] - longMean ) > longThresh
 
-zips2017 
+ 
 coords2017 = coords2017.drop(coords2017[dropLat | dropLong].index)
 
 #plt.scatter(coords2017['latitude'],coords2017['longitude'])
 
 # find unique zips and loop through
 
+collPerKm2 = []
+uniqueZips = zips2017.unique()
+uniqueZips = uniqueZips[~np.isnan(uniqueZips)]
 
+for iZip in uniqueZips:
+    
+    thisZip2017 = zips2017 == iZip
+    
+    if sum(thisZip2017) >= 1000:
+        
+        latStd = coords2017.loc[thisZip2017,['latitude']].std()
+        longStd = coords2017.loc[thisZip2017,['longitude']].std()
+        latMean = coords2017.loc[thisZip2017,['latitude']].mean()
+        longMean = coords2017.loc[thisZip2017,['longitude']].mean()
+    
+        r1 = distance.distance(latMean, latMean + latStd).km
+        r2 = distance.distance(longMean, longMean + longStd).km
+        area = math.pi * r1 * r2
 
+        collPerKm2 += [ sum(thisZip2017) / area ]
+    else:
+        collPerKm2 +=  [] 
 
+print(max(collPerKm2))
