@@ -121,6 +121,13 @@ plt.show()
 
 #### access Riot API and load player data
 
+import requests
+import json
+
+## Parameters
+summonerName = "<your_League_of_Legends_username>"
+APIKey = "<your_riot_games_APIkey_here"
+
 summoner_id = "https://na.api.riotgames.com/api/lol/NA/v1.4/summoner/
 def request(name):
     time.sleep(1)
