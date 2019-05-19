@@ -4,6 +4,7 @@ Created on Sat May 18 12:14:13 2019
 
 @author: Zhe
 """
+import time
 import numpy as np
 import requests
 import json
@@ -11,12 +12,16 @@ import cassiopeia as cass
 from cassiopeia import Champion, Champions
 import pandas as pd
 
+## Parameters
+summonerName = "Artificial Anus"
+APIKey = "RGAPI-d9a303bf-dc95-4535-ae5e-366d46c4b984"
+
 rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
-df = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
+dfPlayer = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
                             'gold_earned','wards_placed','damage_dealt_to_objectives',
                             'damage_dealt_to_turrets','kda',
                             'total_damage_dealt_to_champions'])
-dataY = pd.DataFrame(columns=['win'])
+dataYPlayer = pd.DataFrame(columns=['win'])
 
 # load champion names and IDs
 dfChampNames = pd.DataFrame(columns=['champion_name','champion_ID'])
@@ -49,10 +54,6 @@ def requestMatchInfo(matchID, APIKey):
     response = requests.get(URL)
     return response.json()
 
-## Parameters
-summonerName = "Artificial Anus"
-APIKey = "RGAPI-a8eb35fe-392b-4730-a51f-ba35fc002e28"
-
 summonerData  = requestSummonerData(summonerName, APIKey)
 
 # Uncomment this line if you want a pretty JSON data dump
@@ -72,6 +73,11 @@ numMatches = len(matchList ['matches'])
 
 for iMatch in range(numMatches-1):
 
+    # need to pause bc of rate limits for riotAPI
+    if iMatch%51 == 0: 
+        time.sleep(121)
+        
+    print( 'match'+ str(iMatch) )
     
     matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
     
@@ -100,7 +106,7 @@ for iMatch in range(numMatches-1):
             # figure out champion name from ID
             thisChampionID = matchInfo['participants'][playerKey]['championId']
             tfIndex = dfChampNames['champion_ID'] == thisChampionID
-            champName =  dfChampNames[tfIndex]['champion_name'].tolist()
+            champName =  dfChampNames[tfIndex]['champion_name'].item()
             
             # figure out player's match rank
             thisRank = matchInfo['participants'][playerKey]['highestAchievedSeasonTier']
@@ -115,7 +121,8 @@ for iMatch in range(numMatches-1):
                          statsDict['totalDamageDealtToChampions']
                     ]
             
-            df.loc[iMatch] = addVector
-            dataY.loc[iMatch] = statsDict['win']
-     
+            dfPlayer.loc[iMatch] = addVector
+            dataYPlayer.loc[iMatch] = statsDict['win']
+        except:
+            print ('Missing fields')
       

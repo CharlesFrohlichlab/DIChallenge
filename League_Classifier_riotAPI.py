@@ -21,6 +21,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from riotAPI_matchInfo import dfPlayer, dataYPlayer # separate script to pull data from RiotAPI for specific player data
+
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
 from sklearn.metrics import classification_report,confusion_matrix
@@ -44,6 +46,11 @@ dataY=data['win']
 # define columns to analyze
 columns2Keep = ['champion_name','match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
 dataX = dataX_all[columns2Keep]
+
+# append player data
+
+dataX.append(dfPlayer)
+dataY.append(dataYPlayer)
 
 ###### Logistic regression Data Preprocessing
 
