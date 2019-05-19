@@ -42,7 +42,7 @@ dataX_all=data.drop('win',axis=1)
 dataY=data['win']
 
 # define columns to analyze
-columns2Keep = ['champion_name','match_rank_score','companion_score','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
+columns2Keep = ['champion_name','match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
 dataX = dataX_all[columns2Keep]
 
 ###### Logistic regression Data Preprocessing
@@ -90,7 +90,7 @@ bestLR.fit(xTrain, yTrain)
 
 logCoefs = bestLR.coef_
 
-x_labels = ['Rank','CompScore','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg']
+x_labels = ['Rank','MaxTime','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg']
 plt.bar(columns_to_scale[0:8],logCoefs[0,0:8])
 plt.ylabel('Coef Score')
 plt.xticks(np.arange(8), x_labels)
