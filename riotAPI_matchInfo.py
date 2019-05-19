@@ -61,8 +61,8 @@ summonerData  = requestSummonerData(summonerName, APIKey)
 #print(json.dumps(summonerData, sort_keys=True, indent=2))
 
 ## Print to the console some basic account information
-print("\n\nSummoner Name:\t" + str(summonerData ['name']))
-print("Level:\t\t" + str(summonerData ['summonerLevel']))
+#print("\n\nSummoner Name:\t" + str(summonerData ['name']))
+#print("Level:\t\t" + str(summonerData ['summonerLevel']))
 
 ## Pull the ID field from the response data, cast it to an int
 ID = summonerData ['id']
