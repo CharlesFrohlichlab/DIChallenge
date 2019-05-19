@@ -47,24 +47,27 @@ dataY=data['win']
 columns2Keep = ['champion_name','match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
 dataX = dataX_all[columns2Keep]
 
-# append player data
-
+# append player data for on hot encoding and scaling
+numPlayerSamps = dfPlayer.shape[0]
 appendXPlayer = dataX.append(dfPlayer)
-appendYPlayer = dataY.append(dataYPlayer)
 
 ###### Logistic regression Data Preprocessing
 
 # Define which columns should be encoded vs scaled
 columns_to_encode = ['champion_name']
-columns_to_scale  = ['match_rank_score','companion_score','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
+columns_to_scale  = ['match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
 # Instantiate encoder/scaler
 scaler = StandardScaler()
 ohe    = OneHotEncoder(sparse=False)
 # Scale and Encode Separate Columns
-scaled_columns  = scaler.fit_transform(dataX[columns_to_scale]) 
-encoded_columns =    ohe.fit_transform(dataX[columns_to_encode])
+scaled_columns  = scaler.fit_transform(appendXPlayer[columns_to_scale]) 
+encoded_columns =    ohe.fit_transform(appendXPlayer[columns_to_encode])
 # Concatenate (Column-Bind) Processed Columns Back Together
-processedX = np.concatenate([scaled_columns, encoded_columns], axis=1)
+processedX_appendPlayer = np.concatenate([scaled_columns, encoded_columns], axis=1)
+
+# IMPORTANT: split appended player data off after one hot encoding and scaling
+processedX = processedX_appendPlayer[:-numPlayerSamps,:]
+processedPlayerX = processedX_appendPlayer[-numPlayerSamps:,:]
 
 # from scikitlearn: split data into test and training sets
 xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random_state=42)
@@ -128,36 +131,28 @@ plt.show()
 
 #### access Riot API and load player data
 
-import requests
-import json
+pred = logOptimal.predict(processedPlayerX)
 
-## Parameters
-summonerName = "<your_League_of_Legends_username>"
-APIKey = "<your_riot_games_APIkey_here"
+print('Optimized logistic regression performance: ',
+      round(accuracy_score(dataYPlayer,pred),5)*100,'%')
 
-summoner_id = "https://na.api.riotgames.com/api/lol/NA/v1.4/summoner/
-def request(name):
-    time.sleep(1)
-    print("Request Done")
-    URL = "{}by-name/{}?api_key={}".format(summoner_id,name,key)
-    response = requests.get(URL)
-    return response.json()
-#One of the top Lol players right now is called Doublelift
-# Request yields his info
-{
-    "profileIconId": 1467,
-    "name": "Doublelift",
-    "summonerLevel": 30,
-    "accountId": 32971449,
-    "id": 20132258,
-    "revisionDate": 1492316460000
-}
-def main():
-    player_match_df_list = {}
-    name = input('Name: ')
-    raw = request(name)
-    player_id = (raw[name.lower()]['id'])
-    # Grabs 20132258 and puts it into match_list function 
-    # which takes the match id and grabs a JSON list of that specific match.                         
-    m_list = match_list(player_id)
-    return m_list
+# calculate predicted probability
+prob = logOptimal.predict_proba(processedPlayerX)[:,1]
+# calculate true and false pos 
+falsePos,truePos,thresh = roc_curve(dataYPlayer,prob)
+#Calculate area under the curve
+AUCscore = roc_auc_score(dataYPlayer,prob)
+
+# ROC plot
+sns.set_style('whitegrid')
+plt.figure(figsize=(8,5))
+
+plt.plot(falsePos,truePos)
+plt.plot([0,1],ls='--')
+plt.plot([0,0],[1,0],c='.5')
+plt.plot([1,1],c='.5')
+
+plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy = ' + str(round(accuracy_score(dataYPlayer,pred),3)*100) + '%')
+plt.ylabel('True positive rate')
+plt.xlabel('False positive rate')
+plt.show()
