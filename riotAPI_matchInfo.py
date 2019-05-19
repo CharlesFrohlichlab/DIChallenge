@@ -22,6 +22,7 @@ dfPlayer = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
                             'damage_dealt_to_turrets','kda',
                             'total_damage_dealt_to_champions'])
 dataYPlayer = pd.DataFrame(columns=['win'])
+dataYPlayer = pd.Series(name="win")
 
 # load champion names and IDs
 dfChampNames = pd.DataFrame(columns=['champion_name','champion_ID'])
@@ -74,7 +75,7 @@ numMatches = len(matchList ['matches'])
 for iMatch in range(numMatches-1):
 
     # need to pause bc of rate limits for riotAPI
-    if iMatch%51 == 0: 
+    if iMatch == 50: 
         time.sleep(121)
         
     print( 'match'+ str(iMatch) )
@@ -122,7 +123,10 @@ for iMatch in range(numMatches-1):
                     ]
             
             dfPlayer.loc[iMatch] = addVector
-            dataYPlayer.loc[iMatch] = statsDict['win']
+            if statsDict['win'] == True: 
+                dataYPlayer.loc[iMatch] = 1
+            else:
+                dataYPlayer.loc[iMatch] = 0
         except:
             print ('Missing fields')
       

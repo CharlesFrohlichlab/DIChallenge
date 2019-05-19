@@ -49,8 +49,8 @@ dataX = dataX_all[columns2Keep]
 
 # append player data
 
-dataX.append(dfPlayer)
-dataY.append(dataYPlayer)
+appendXPlayer = dataX.append(dfPlayer)
+appendYPlayer = dataY.append(dataYPlayer)
 
 ###### Logistic regression Data Preprocessing
 
