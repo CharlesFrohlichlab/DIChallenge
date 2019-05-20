@@ -21,7 +21,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from riotAPI_matchInfo import dfPlayer, dataYPlayer # separate script to pull data from RiotAPI for specific player data
+from riotAPI_matchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
 
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
@@ -129,7 +129,7 @@ plt.ylabel('True positive rate')
 plt.xlabel('False positive rate')
 plt.show()
 
-#### access Riot API and load player data
+#### Now predict game outcome for player data pulled from riot API
 
 pred = logOptimal.predict(processedPlayerX)
 
