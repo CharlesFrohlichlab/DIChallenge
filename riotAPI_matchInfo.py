@@ -11,10 +11,11 @@ import json
 import cassiopeia as cass
 from cassiopeia import Champion, Champions
 import pandas as pd
+import os
 
 ## Parameters
 summonerName = "Artificial Anus"
-APIKey = "RGAPI-d9a303bf-dc95-4535-ae5e-366d46c4b984"
+APIKey = os.environ.get('League_API')
 
 rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
 dfPlayer = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
