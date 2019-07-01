@@ -33,7 +33,7 @@ warnings.filterwarnings('ignore')
 
 #### Load data
 
-data=pd.read_csv("C:\\Users\\Zhe\\Documents\\DataScienceProjects\\totalSup.csv")
+data=pd.read_csv("C:\\Users\\The Iron Maiden\\Documents\\DataScienceProjects\\totalSup.csv")
 
 # make the column names reference-friendly
 data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
@@ -105,6 +105,19 @@ plt.bar(columns_to_scale[0:8],logCoefs[0,0:8])
 plt.ylabel('Coef Score')
 plt.xticks(np.arange(8), x_labels)
 plt.title('Log Reg Coef Scores')
+
+# plot absolute value of coeff and sort by highest coeff
+
+logCoefs_abs = abs(bestLR.coef_)
+logCoefs_absSort = sorted(logCoefs_abs[0,0:8],reverse=True)
+sortedInds = np.argsort(-logCoefs_abs[0,0:8])
+
+plt.figure(figsize=(10,5))
+plt.bar(columns_to_scale[0:8],logCoefs_absSort)
+plt.ylabel('Coefficient Score (Impact)', fontsize=14)
+plt.xticks(np.arange(8), [x_labels[i] for i in sortedInds], fontsize=13 ) # need to reorder x labels according to sorting of coeffs
+plt.yticks(fontsize=13)
+plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=14)
 
 #### calculate model performance
 

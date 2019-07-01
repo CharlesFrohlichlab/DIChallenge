@@ -14,7 +14,7 @@ import pandas as pd
 import os
 
 ## Parameters
-summonerName = "Artificial Anus"
+summonerName = "Duvet Cover"
 APIKey = os.environ.get('League_API')
 
 rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
