@@ -79,7 +79,7 @@ for iMatch in range(numMatches-1):
     if iMatch == 50: 
         time.sleep(121)
         
-    print( 'match'+ str(iMatch) )
+    print( 'Get match'+ str(iMatch) )
     
     matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
     
