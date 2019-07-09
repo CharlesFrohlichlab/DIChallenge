@@ -96,7 +96,7 @@ for iMatch in range(numMatches-1):
         try: 
             statsDict = matchInfo['participants'][playerKey]['stats'] # get stats dict from this game
             
-            
+        
             ############ preprocess data
             
             # calculate KDA
@@ -130,4 +130,18 @@ for iMatch in range(numMatches-1):
                 dataYPlayer.loc[iMatch] = 0
         except:
             print ('Missing fields')
-      
+
+# calculate mean across matches for post-game metrics
+dfPlayer_shape = dfPlayer.shape    
+
+# take mean across continuous columns        
+column_list = ['max_time','gold_earned','wards_placed','damage_dealt_to_objectives',
+                            'damage_dealt_to_turrets','kda',
+                            'total_damage_dealt_to_champions']
+row_index_list = range(0,dfPlayer_shape[0])        
+matchMean = dfPlayer[column_list].iloc[row_index_list].mean(axis=0)
+
+# replace all rows of dfPlayer with mean
+for iRow in range(0,dfPlayer_shape[0]) : # 
+    dfPlayer.iloc[ iRow,2:] = matchMean
+       
