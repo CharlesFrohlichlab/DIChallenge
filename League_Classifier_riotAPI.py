@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # use riotAPI_matchInfo for individual match info; riotAPI_avgMatchInfo to take avg across all matches for each sample
-from riotAPI_avgMatchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
+from riotAPI_matchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
 
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
@@ -50,25 +50,33 @@ dataX = dataX_all[columns2Keep]
 
 # append player data for on hot encoding and scaling
 numPlayerSamps = dfPlayer.shape[0]
-appendXPlayer = dataX.append(dfPlayer)
 
 ###### Logistic regression Data Preprocessing
 
 # Define which columns should be encoded vs scaled
 columns_to_encode = ['champion_name']
 columns_to_scale  = ['match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
+
+# we're going to encode the categorical data together (dataX + player) since we might find new champions in the player data
+dataToEncode_plusPlayer = dataX[columns_to_encode].append(dfPlayer[columns_to_encode])
+
 # Instantiate encoder/scaler
 scaler = StandardScaler()
 ohe    = OneHotEncoder(sparse=False)
-# Scale and Encode Separate Columns
-scaled_columns  = scaler.fit_transform(appendXPlayer[columns_to_scale]) 
-encoded_columns =    ohe.fit_transform(appendXPlayer[columns_to_encode])
-# Concatenate (Column-Bind) Processed Columns Back Together
-processedX_appendPlayer = np.concatenate([scaled_columns, encoded_columns], axis=1)
+# Scale and Encode the continuous and categorical data separately
+scaled_columnsX  = scaler.fit_transform(dataX[columns_to_scale]) 
+encoded_columns =    ohe.fit_transform(dataToEncode_plusPlayer)
 
-# IMPORTANT: split appended player data off after one hot encoding and scaling
-processedX = processedX_appendPlayer[:-numPlayerSamps,:]
-processedPlayerX = processedX_appendPlayer[-numPlayerSamps:,:]
+scaled_columns_player  = scaler.transform(dfPlayer[columns_to_scale]) 
+
+# IMPORTANT: split appended player data off after one hot encoding 
+encodedColumnsX = encoded_columns[:-numPlayerSamps,:]
+encodedColumns_Player = encoded_columns[-numPlayerSamps:,:]
+
+# Concatenate (Column-Bind) Processed Columns Back Together
+processedX = np.concatenate([scaled_columnsX, encodedColumnsX], axis=1)
+processedPlayerX = np.concatenate([scaled_columns_player, encodedColumns_Player], axis=1)
+
 
 # from scikitlearn: split data into test and training sets
 xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random_state=42)
