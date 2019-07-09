@@ -21,7 +21,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from riotAPI_matchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
+# use riotAPI_matchInfo for individual match info; riotAPI_avgMatchInfo to take avg across all matches for each sample
+from riotAPI_avgMatchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
 
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
