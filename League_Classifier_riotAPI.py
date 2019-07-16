@@ -55,8 +55,7 @@ numPlayerSamps = dfPlayer.shape[0]
 
 # Define which columns should be encoded vs scaled
 columns_to_encode = ['champion_name']
-columns_to_scale  = ['match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions', 'total_damage_taken', 'total_minions_killed']
-
+columns_to_scale  = columns2Keep[1:]
 # we're going to encode the categorical data together (dataX + player) since we might find new champions in the player data
 dataToEncode_plusPlayer = dataX[columns_to_encode].append(dfPlayer[columns_to_encode])
 
@@ -104,27 +103,29 @@ print('Optimized logistic regression performance: ',
 
 #### examine contribution of variables to win
 
+numVars = len(columns_to_scale)
+
 bestLR=LogisticRegression(C=1,penalty='l1',random_state=0)
 bestLR.fit(xTrain, yTrain)
 
 logCoefs = bestLR.coef_
 
-x_labels = ['Rank','MaxTime','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg']
-plt.bar(columns_to_scale[0:8],logCoefs[0,0:8])
+x_labels = ['Rank','MaxTime','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg', 'dmgTaken', 'minion#','percDmgTaken']
+plt.bar(columns_to_scale[0:numVars],logCoefs[0,0:numVars])
 plt.ylabel('Coef Score')
-plt.xticks(np.arange(8), x_labels)
+plt.xticks(np.arange(numVars), x_labels, rotation = 45, fontsize=13 )
 plt.title('Log Reg Coef Scores')
 
 # plot absolute value of coeff and sort by highest coeff
 
 logCoefs_abs = abs(bestLR.coef_)
-logCoefs_absSort = sorted(logCoefs_abs[0,0:8],reverse=True)
-sortedInds = np.argsort(-logCoefs_abs[0,0:8])
+logCoefs_absSort = sorted(logCoefs_abs[0,0:numVars],reverse=True)
+sortedInds = np.argsort(-logCoefs_abs[0,0:numVars])
 
 plt.figure(figsize=(10,5))
-plt.bar(columns_to_scale[0:8],logCoefs_absSort)
+plt.bar(columns_to_scale[0:numVars],logCoefs_absSort)
 plt.ylabel('Coefficient Score (Impact)', fontsize=14)
-plt.xticks(np.arange(8), [x_labels[i] for i in sortedInds], fontsize=13 ) # need to reorder x labels according to sorting of coeffs
+plt.xticks(np.arange(numVars), [x_labels[i] for i in sortedInds], rotation = 45, fontsize=13 ) # need to reorder x labels according to sorting of coeffs
 plt.yticks(fontsize=13)
 plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=14)
 

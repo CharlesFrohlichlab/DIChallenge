@@ -17,6 +17,7 @@ import os
 ## Parameters
 summonerName = "Duvet Cover"
 APIKey = os.environ.get('League_API')
+region = 'euw1'
 
 rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
 dfPlayer = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
@@ -34,95 +35,113 @@ for champion in champions:
         dfChampNames.loc[index] = [champion.name, champion.id ]
         index+=1
 
-       
+ 
 ## Get account details by providing the account name
-def requestSummonerData(summonerName, APIKey):
-    URL = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + summonerName + "?api_key=" + APIKey
+def requestSummonerData(region,summonerName, APIKey):
+    URL = "https://{}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{}?api_key={}".format(region,summonerName,APIKey)
     response = requests.get(URL)
     return response.json()
 
 ## Get an account's ranked match data by account ID
-def requestRankedData(ID, APIKey):
-    URL = "https://na1.api.riotgames.com/lol/summoner/v4/positions/by-summoner/" + str(ID) + "?api_key=" + APIKey
+def requestRankedData(region,summonerID, APIKey):
+    URL = "https://{}.api.riotgames.com/lol/summoner/v4/positions/by-summoner/{}?api_key={}".format(region,summonerID,APIKey)
     response = requests.get(URL)
     return response.json()
 
-def requestMatchList(ID, APIKey):
-    URL = "https://na1.api.riotgames.com/lol/match/v4/matchlists/by-account/" + str(ID) + "?api_key=" + APIKey
+def requestMatchList(region,acctID, APIKey):
+    URL = "https://{}.api.riotgames.com/lol/match/v4/matchlists/by-account/{}?api_key={}".format(region,acctID,APIKey)
     response = requests.get(URL)
     return response.json()
 
-def requestMatchInfo(matchID, APIKey):
-    URL = "https://na1.api.riotgames.com//lol/match/v4/matches/" + str(matchID) + "?api_key=" + APIKey
+def requestMatchInfo(region,matchID, APIKey):
+    URL = "https://{}.api.riotgames.com/lol/match/v4/matches/{}?api_key={}".format(region,matchID,APIKey)
     response = requests.get(URL)
     return response.json()
 
-summonerData  = requestSummonerData(summonerName, APIKey)
+def requestLeagueInfo(region,leagueID, APIKey):
+    URL = "https://{}.api.riotgames.com/lol/league/v4/leagues/{}?api_key={}".format(region,leagueID,APIKey)
+    response = requests.get(URL)
+    return response.json()
 
+leagueList=pd.read_csv("C:\\Users\\The Iron Maiden\\Documents\\DataScienceProjects\\league_euw1.csv")
 
-## Pull the ID field from the response data, cast it to an int
-ID = summonerData ['id']
-accountID = summonerData ['accountId']   
+leagueList_toAnalyze = leagueList[0:1]
+
+counter_match = 0
+for index, row in leagueList_toAnalyze.iterrows():
+ 
+    ## Pull the ID field from the response data, cast it to an int
+    thisLeagueID = row ['leagueId']
+    print(thisLeagueID)    
+    # entries is a dict 
+    thisLeagueList  = requestLeagueInfo(region,thisLeagueID, APIKey)['entries']
     
-matchList  = requestMatchList(accountID, APIKey)
-   
-numMatches = len(matchList ['matches'])
-
-for iMatch in range(numMatches-1):
-
-    # need to pause bc of rate limits for riotAPI
-    if iMatch == 50: 
-        time.sleep(121)
+    for summoner in thisLeagueList:
         
-    print( 'Get match'+ str(iMatch) )
+        print(summoner['summonerName'])
     
-    matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
-    
-    matchInfo = requestMatchInfo(matchID, APIKey) # pull this game's info from riotAPI
-    
-    # find index of player in player list
-    for i in range( len(matchInfo['participantIdentities'])-1 ):
-        if matchInfo['participantIdentities'][i]['player']['accountId'] == accountID:
-            playerKey = i
-    
-    
-    if matchInfo['participants'][playerKey]['timeline']['role'] == 'DUO_SUPPORT':
-    
-        try: 
-            statsDict = matchInfo['participants'][playerKey]['stats'] # get stats dict from this game
-            
+        acctID = requestSummonerData(region,summoner['summonerName'], APIKey)['accountId']
         
-            ############ preprocess data
-            
-            # calculate KDA
-            if statsDict['deaths'] == 0:
-                kda = statsDict['kills'] + statsDict['assists']
-            else:
-                kda = ( statsDict['kills'] + statsDict['assists'] ) / statsDict['deaths']
+        matchList  = requestMatchList(region,acctID, APIKey)   
+        numMatches = len(matchList ['matches'])
+        
+        for iMatch in range(numMatches-1):
+        
+            # need to pause bc of rate limits for riotAPI
+            if iMatch == 50: 
+                time.sleep(180)
                 
-            # figure out champion name from ID
-            thisChampionID = matchInfo['participants'][playerKey]['championId']
-            tfIndex = dfChampNames['champion_ID'] == thisChampionID
-            champName =  dfChampNames[tfIndex]['champion_name'].item()
+            print( 'Get match'+ str(iMatch) )
             
-            # figure out player's match rank
-            thisRank = matchInfo['participants'][playerKey]['highestAchievedSeasonTier']
-            matchRank = rankNames.index(thisRank) + 1
+            matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
             
-            ############ preprocess data end
+            matchInfo = requestMatchInfo(region,matchID, APIKey) # pull this game's info from riotAPI
             
-            # create a vector of data to append for this match
-            addVector = [ champName, matchRank, matchInfo['gameDuration'], statsDict['goldEarned'], 
-                         statsDict['wardsPlaced'], statsDict['damageDealtToObjectives'], 
-                         statsDict['damageDealtToTurrets'], kda, 
-                         statsDict['totalDamageDealtToChampions']
-                    ]
+            # find index of player in player list
+            for i in range( len(matchInfo['participantIdentities'])-1 ):
+                if matchInfo['participantIdentities'][i]['player']['accountId'] == acctID:
+                    playerKey = i
             
-            dfPlayer.loc[iMatch] = addVector
-            if statsDict['win'] == True: 
-                dataYPlayer.loc[iMatch] = 1
-            else:
-                dataYPlayer.loc[iMatch] = 0
-        except:
-            print ('Missing fields')
-
+            
+            if matchInfo['participants'][playerKey]['timeline']['role'] == 'DUO_SUPPORT':
+            
+                try: 
+                    statsDict = matchInfo['participants'][playerKey]['stats'] # get stats dict from this game
+                    playerTeam = matchInfo['participants'][playerKey]['teamId']
+                    
+                    ############ preprocess data
+                    
+                    # calculate KDA
+                    if statsDict['deaths'] == 0:
+                        kda = statsDict['kills'] + statsDict['assists']
+                    else:
+                        kda = ( statsDict['kills'] + statsDict['assists'] ) / statsDict['deaths']
+                        
+                    # figure out champion name from ID
+                    thisChampionID = matchInfo['participants'][playerKey]['championId']
+                    tfIndex = dfChampNames['champion_ID'] == thisChampionID
+                    champName =  dfChampNames[tfIndex]['champion_name'].item()
+                    
+                    # figure out player's match rank
+                    thisRank = matchInfo['participants'][playerKey]['highestAchievedSeasonTier']
+                    matchRank = rankNames.index(thisRank) + 1
+                    
+                    ############ preprocess data end
+                    
+                    # create a vector of data to append for this match
+                    addVector = [ champName, matchRank, matchInfo['gameDuration'], statsDict['goldEarned'], 
+                                 statsDict['wardsPlaced'], statsDict['damageDealtToObjectives'], 
+                                 statsDict['damageDealtToTurrets'], kda, 
+                                 statsDict['totalDamageDealtToChampions']
+                            ]
+                    
+                    dfPlayer.loc[counter_match] = addVector
+                    if statsDict['win'] == True: 
+                        dataYPlayer.loc[counter_match] = 1
+                    else:
+                        dataYPlayer.loc[counter_match] = 0
+                    counter_match += 1
+                except:
+                    print ('Missing fields')
+        
+# dfPlayer.to_csv('output.csv')                    

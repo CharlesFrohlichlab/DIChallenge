@@ -12,16 +12,18 @@ import cassiopeia as cass
 from cassiopeia import Champion, Champions
 import pandas as pd
 import os
+#import dill
 
 ## Parameters
 summonerName = "Duvet Cover"
 APIKey = os.environ.get('League_API')
 
 rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
-dfPlayer = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
+columnNames = ['champion_name','match_rank_score','max_time',
                             'gold_earned','wards_placed','damage_dealt_to_objectives',
                             'damage_dealt_to_turrets','kda',
-                            'total_damage_dealt_to_champions'])
+                            'total_damage_dealt_to_champions', 'total_damage_taken', 'total_minions_killed']
+dfPlayer = pd.DataFrame(columns=columnNames)
 dataYPlayer = pd.DataFrame(columns=['win'])
 dataYPlayer = pd.Series(name="win")
 
@@ -120,7 +122,8 @@ for iMatch in range(numMatches-1):
             addVector = [ champName, matchRank, matchInfo['gameDuration'], statsDict['goldEarned'], 
                          statsDict['wardsPlaced'], statsDict['damageDealtToObjectives'], 
                          statsDict['damageDealtToTurrets'], kda, 
-                         statsDict['totalDamageDealtToChampions']
+                         statsDict['totalDamageDealtToChampions'],
+                         statsDict['totalDamageTaken'],statsDict['totalMinionsKilled']
                     ]
             
             dfPlayer.loc[iMatch] = addVector
@@ -135,9 +138,7 @@ for iMatch in range(numMatches-1):
 dfPlayer_shape = dfPlayer.shape    
 
 # take mean across continuous columns        
-column_list = ['max_time','gold_earned','wards_placed','damage_dealt_to_objectives',
-                            'damage_dealt_to_turrets','kda',
-                            'total_damage_dealt_to_champions']
+column_list = columnNames[1:] # skip champ name column
 row_index_list = range(0,dfPlayer_shape[0])        
 matchMean = dfPlayer[column_list].iloc[row_index_list].mean(axis=0)
 

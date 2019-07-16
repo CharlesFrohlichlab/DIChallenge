@@ -34,7 +34,7 @@ dataX_all=data.drop('win',axis=1)
 dataY=data['win']
 
 # define columns to analyze
-columns2Keep = ['champion_name', 'participant_id', 
+columns2Keep = columns2Keep = ['champion_name', 'participant_id', 
        'match_rank_score', 'account_id', 'champion_id', 
        'companion_score', 'split_score', 'rotation_score', 'gold_earned',
        'kills', 'deaths', 'assists', 'total_minions_killed',
@@ -46,6 +46,7 @@ columns2Keep = ['champion_name', 'participant_id',
        'true_damage_dealt_do_dhampions', 'total_heal', 'time_ccing_others',
        'percent_taken', 'total_damage_dealt_to_champions', 'percent_magic',
        'kda', 'max_time']
+
 
 dataX = dataX_all[columns2Keep]
 
@@ -93,6 +94,26 @@ processedX = np.concatenate([scaled_columnsX, encodedColumnsX], axis=1)
 
 # from scikitlearn: split data into test and training sets
 xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random_state=42)
+
+## for test data, take mean across games
+
+testMeanGames = 0
+if testMeanGames == 1:
+    
+    # calculate mean across matches for post-game metrics
+    dfPlayer_shape = dfPlayer.shape    
+    
+    # take mean across continuous columns        
+    column_list = ['max_time','gold_earned','wards_placed','damage_dealt_to_objectives',
+                                'damage_dealt_to_turrets','kda',
+                                'total_damage_dealt_to_champions']
+    row_index_list = range(0,dfPlayer_shape[0])        
+    matchMean = dfPlayer[column_list].iloc[row_index_list].mean(axis=0)
+    
+    # replace all rows of dfPlayer with mean
+    for iRow in range(0,dfPlayer_shape[0]) : # 
+        dfPlayer.iloc[ iRow,2:] = matchMean
+    
 
 ###### Logistic regression
 
