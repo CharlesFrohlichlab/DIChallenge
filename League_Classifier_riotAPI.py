@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # use riotAPI_matchInfo for individual match info; riotAPI_avgMatchInfo to take avg across all matches for each sample
-from riotAPI_matchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
+from riotAPI_avgMatchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
 
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
@@ -45,7 +45,7 @@ dataX_all=data.drop('win',axis=1)
 dataY=data['win']
 
 # define columns to analyze
-columns2Keep = ['champion_name','match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
+columns2Keep = ['champion_name','match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions', 'total_damage_taken', 'total_minions_killed']
 dataX = dataX_all[columns2Keep]
 
 # append player data for on hot encoding and scaling
@@ -55,7 +55,7 @@ numPlayerSamps = dfPlayer.shape[0]
 
 # Define which columns should be encoded vs scaled
 columns_to_encode = ['champion_name']
-columns_to_scale  = ['match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions']
+columns_to_scale  = ['match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions', 'total_damage_taken', 'total_minions_killed']
 
 # we're going to encode the categorical data together (dataX + player) since we might find new champions in the player data
 dataToEncode_plusPlayer = dataX[columns_to_encode].append(dfPlayer[columns_to_encode])
@@ -86,7 +86,7 @@ xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random
 parameters=[
 {
     'penalty':['l1','l2'],
-    'C':[0.1,0.4,0.5,1],
+    'C':[0.001, 0.01, 0.1,1, 10, 100, 1000],
     'random_state':[0]
     },
 ]
