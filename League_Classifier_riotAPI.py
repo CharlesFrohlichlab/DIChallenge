@@ -87,7 +87,7 @@ xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random
 parameters=[
 {
     'penalty':['l1','l2'],
-    'C':[0.001, 0.01, 0.1,1, 10, 100, 1000],
+    'C':[ 0.01, 0.1,1, 10],
     'random_state':[0]
     },
 ]
@@ -106,6 +106,7 @@ print('Optimized logistic regression performance: ',
 # save the model to disk
 filename = 'final_logRegLoL.sav'
 pickle.dump(logOptimal, open(filename, 'wb'))
+#logOptimal = pickle.load(open(filename, 'rb'))
 
 #### examine contribution of variables to win
 
@@ -135,28 +136,28 @@ plt.xticks(np.arange(numVars), [x_labels[i] for i in sortedInds], rotation = 45,
 plt.yticks(fontsize=13)
 plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=14)
 
-#### calculate model performance
+#### calculate model performance for test data
 
-# calculate predicted probability
-prob = logOptimal.predict_proba(xTest)[:,1]
-# calculate true and false pos 
-falsePos,truePos,thresh = roc_curve(yTest,prob)
-#Calculate area under the curve
-AUCscore = roc_auc_score(yTest,prob)
-
-# ROC plot
-sns.set_style('whitegrid')
-plt.figure(figsize=(8,5))
-
-plt.plot(falsePos,truePos)
-plt.plot([0,1],ls='--')
-plt.plot([0,0],[1,0],c='.5')
-plt.plot([1,1],c='.5')
-
-plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy = ' + str(round(accuracy_score(yTest,pred),3)*100) + '%')
-plt.ylabel('True positive rate')
-plt.xlabel('False positive rate')
-plt.show()
+## calculate predicted probability
+#prob = logOptimal.predict_proba(xTest)[:,1]
+## calculate true and false pos 
+#falsePos,truePos,thresh = roc_curve(yTest,prob)
+##Calculate area under the curve
+#AUCscore = roc_auc_score(yTest,prob)
+#
+## ROC plot
+#sns.set_style('whitegrid')
+#plt.figure(figsize=(8,5))
+#
+#plt.plot(falsePos,truePos)
+#plt.plot([0,1],ls='--')
+#plt.plot([0,0],[1,0],c='.5')
+#plt.plot([1,1],c='.5')
+#
+#plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy = ' + str(round(accuracy_score(yTest,pred),3)*100) + '%')
+#plt.ylabel('True positive rate')
+#plt.xlabel('False positive rate')
+#plt.show()
 
 #### Now predict game outcome for player data pulled from riot API
 
@@ -188,24 +189,53 @@ plt.show()
 
 ######
 
+import plotly.graph_objects as go
 
-#columns2Keep.remove('champion_name')
-#
-#tmpData = dataX.drop('champion_name',axis=1).assign(Group='data')
-#tmpDataPlayer = dfPlayer.drop('champion_name',axis=1).assign(Group='player')
-#
-#allDataWithPlayer = tmpData.append(tmpDataPlayer, ignore_index=True)
-#
-#
-#groupedMean = allDataWithPlayer.groupby('Group').mean()
-#
-#normalized_df=(allDataWithPlayer-allDataWithPlayer.min())/(allDataWithPlayer.max()-allDataWithPlayer.min())
-#
-#dataMean = dataX.drop('champion_name',axis=1).mean(axis=0)
-#
-#
-#base = alt.Chart(tips, width=500, height=200).mark_bar().encode(
-#    alt.X('Date:T'),
-#    alt.Y('Close')
-#)
-#base
+# append column for data group
+tmpData = dataX.drop('champion_name',axis=1).assign(Group='data')
+tmpDataPlayer = dfPlayer.drop('champion_name',axis=1).assign(Group='player')
+allDataWithPlayer = tmpData.append(tmpDataPlayer, ignore_index=True)
+
+# normalize (0-1) ccontinuous data and add back on group
+df_2norm = allDataWithPlayer.iloc[:,1:-1]
+normalized_df=( df_2norm-df_2norm.min() )/( df_2norm.max()-df_2norm.min() )
+normalized_df['Group']=allDataWithPlayer['Group']
+
+col2Group = columns2Keep[1:-1]
+justDataData = normalized_df.loc[normalized_df['Group'] == 'data']
+norm_dataMean = justDataData[0:75].mean(axis=0)
+norm_playerMean = normalized_df.loc[normalized_df['Group'] == 'player'].mean(axis=0)
+
+#################
+
+categories = columns2Keep[1:-1]
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatterpolar(
+      r=norm_dataMean,
+      theta=categories,
+      fill='toself',
+      name='Average Player Performance'
+))
+
+fig.add_trace(go.Scatterpolar(
+      r=norm_playerMean,
+      theta=categories,
+      fill='toself',
+      name='Your Performance'
+))
+
+fig.update_layout(
+  polar=dict(
+    radialaxis=dict(
+      visible=True,
+     
+    )),
+  showlegend=True
+)
+# fig.show()
+plot(fig, auto_open=True)
+
+
+
