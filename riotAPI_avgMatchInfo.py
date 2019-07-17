@@ -78,7 +78,7 @@ numMatches = len(matchList ['matches'])
 for iMatch in range(numMatches-1):
 
     # need to pause bc of rate limits for riotAPI
-    if iMatch == 50: 
+    if iMatch%80 == 0 and iMatch != 0: 
         time.sleep(121)
         
     print( 'Get match'+ str(iMatch) )

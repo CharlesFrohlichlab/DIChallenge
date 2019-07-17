@@ -30,7 +30,7 @@ columnNames = ['account_id', 'assists', 'champion_id','champion_name',
                     'timeCCingOthers','totalDamageDealtToChampions',
                     'totalDamageTaken','totalHeal','totalMinionsKilled',
                     'trueDamageDealtToChampions','true_role','wardsKilled','wardsPlaced','visionScore',
-                    'win'
+                    'win','team_id', 'playerTop','playerJung','playerMid','playerADC','playerSupp','oppTop','oppJung','oppMid','oppADC','oppSupp'
                     ]
         
 dfTop = pd.DataFrame(columns=columnNames)
@@ -92,8 +92,8 @@ for index, row in leagueList_toAnalyze.iterrows():
     
     # entries is a dict 
     thisLeagueList  = requestLeagueInfo(region,thisLeagueID, APIKey)['entries']
-    #thisLeagueList = thisLeagueList[0:2] # CZ__
-    for summoner in thisLeagueList:
+    thisLeagueList = thisLeagueList[0:50] # CZ__
+    for sumIndex,summoner in thisLeagueList:
         
         print(summoner['summonerName'])
     
@@ -105,24 +105,27 @@ for index, row in leagueList_toAnalyze.iterrows():
         for iMatch in range(numMatches-1):
          
             # need to pause bc of rate limits for riotAPI
-            if iMatch%99 == 0 and iMatch != 0: 
+            if iMatch%80 == 0 and iMatch != 0: 
+                
                 time.sleep(121)
                 
             print( 'Get match'+ str(iMatch) )
             
-            matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
+            try:
             
-            matchInfo = requestMatchInfo(region,matchID, APIKey) # pull this game's info from riotAPI
-            # get metrics from match info
-            max_time = matchInfo['gameDuration']
-            game_version = matchInfo['gameVersion']
-            
-            # find index of player in player list
-            for i in range( len(matchInfo['participantIdentities'])-1 ):
-                if matchInfo['participantIdentities'][i]['player']['accountId'] == acctID:
-                    playerKey = i
-  
-            try: 
+                matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
+                
+                matchInfo = requestMatchInfo(region,matchID, APIKey) # pull this game's info from riotAPI
+                # get metrics from match info
+                max_time = matchInfo['gameDuration']
+                game_version = matchInfo['gameVersion']
+                
+                # find index of player in player list
+                for i in range( len(matchInfo['participantIdentities'])-1 ):
+                    if matchInfo['participantIdentities'][i]['player']['accountId'] == acctID:
+                        playerKey = i
+      
+             
                 statsDict = matchInfo['participants'][playerKey]['stats'] # get stats dict from this game
                 playerTeam = matchInfo['participants'][playerKey]['teamId']
                 
@@ -140,13 +143,51 @@ for index, row in leagueList_toAnalyze.iterrows():
                 champName =  dfChampNames[tfIndex]['champion_name'].item()
                 
                 # figure out player's match rank
-                thisRank = matchInfo['participants'][playerKey]['highestAchievedSeasonTier']
-                matchRank = rankNames.index(thisRank) + 1
-                
-                ############ preprocess data end
+                if 'highestAchievedSeasonTier' not in matchInfo['participants'][playerKey]:
+                    thisRank = 'Unranked'
+                    matchRank = 0
+                else:
+                    thisRank = matchInfo['participants'][playerKey]['highestAchievedSeasonTier']
+                    matchRank = rankNames.index(thisRank) + 1
                 
                 role = matchInfo['participants'][playerKey]['timeline']['role']
                 lane = matchInfo['participants'][playerKey]['timeline']['lane']
+                teamID = matchInfo['participants'][playerKey]['teamId'] 
+                
+                
+                for iParticipant in range(0,10):
+                    thisRole = matchInfo['participants'][iParticipant]['timeline']['role']
+                    thisLane = matchInfo['participants'][iParticipant]['timeline']['lane']
+                    thisTeamID = matchInfo['participants'][iParticipant]['teamId']
+                    
+                    thisPlayerChampionID = matchInfo['participants'][iParticipant]['championId']
+                    champIndex = dfChampNames['champion_ID'] == thisPlayerChampionID
+                    thisChampName =  dfChampNames[champIndex]['champion_name'].item()
+                    
+                    tmpID = "{}_{}".format(thisRole,thisLane)
+                    
+                    if tmpID == 'SOLO_TOP' and thisTeamID == teamID: 
+                        playerTop = thisChampName
+                    elif tmpID == 'NONE_JUNGLE' and thisTeamID == teamID:
+                        playerJung = thisChampName
+                    elif tmpID == 'SOLO_MIDDLE' and thisTeamID == teamID:
+                        playerMid = thisChampName
+                    elif tmpID == 'DUO_CARRY_BOTTOM' and thisTeamID == teamID:
+                        playerADC = thisChampName
+                    elif tmpID == 'DUO_SUPPORT_BOTTOM' and thisTeamID == teamID:
+                        playerSupp = thisChampName
+                    elif tmpID == 'SOLO_TOP' and thisTeamID != teamID:
+                        oppTop = thisChampName
+                    elif tmpID == 'NONE_JUNGLE' and thisTeamID != teamID:
+                        oppJung = thisChampName
+                    elif tmpID == 'SOLO_MIDDLE' and thisTeamID != teamID:
+                        oppMid = thisChampName
+                    elif tmpID == 'DUO_CARRY_BOTTOM' and thisTeamID != teamID:   
+                        oppADC = thisChampName
+                    elif tmpID == 'DUO_SUPPORT_BOTTOM' and thisTeamID != teamID: 
+                        oppSupp = thisChampName
+                ############ put data together 
+    
                 
                 if role in ['SOLO','NONE']:
                     true_role = lane
@@ -162,11 +203,11 @@ for index, row in leagueList_toAnalyze.iterrows():
                     statsDict['timeCCingOthers'],statsDict['totalDamageDealtToChampions'],
                     statsDict['totalDamageTaken'],statsDict['totalHeal'],statsDict['totalMinionsKilled'],
                     statsDict['trueDamageDealtToChampions'],true_role,statsDict['wardsKilled'],statsDict['wardsPlaced'],statsDict['visionScore'],
-                    int(statsDict['win'])
+                    int(statsDict['win']), teamID, playerTop,playerJung,playerMid,playerADC,playerSupp,oppTop,oppJung,oppMid,oppADC,oppSupp 
                     ]
                 
                 ######### add data to dataframes to save
-
+    
                 if  role == 'SOLO' and lane == 'TOP':   
                     dfTop.loc[topCounter] = addVector
                     topCounter += 1
@@ -191,5 +232,9 @@ for index, row in leagueList_toAnalyze.iterrows():
             except:
                 print ('Missing fields')
 
-                
-# dfPlayer.to_csv('output.csv', header=columnNames)                    
+date = '20190717'            
+dfTop.to_csv('top_'+date+'.csv', header=columnNames)  
+dfJungle.to_csv('jung_'+date+'.csv', header=columnNames)
+dfMid.to_csv('mid_'+date+'.csv', header=columnNames)
+dfBot.to_csv('adc_'+date+'.csv', header=columnNames)
+dfSupp.to_csv('supp_'+date+'.csv', header=columnNames)               
