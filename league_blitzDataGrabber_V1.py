@@ -20,10 +20,12 @@ APIKey = os.environ.get('League_API')
 region = 'euw1'
 
 rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
-dfPlayer = pd.DataFrame(columns=['champion_name','match_rank_score','max_time',
+
+columnNames = ['champion_name','match_rank_score','max_time',
                             'gold_earned','wards_placed','damage_dealt_to_objectives',
                             'damage_dealt_to_turrets','kda',
-                            'total_damage_dealt_to_champions'])
+                            'total_damage_dealt_to_champions']
+dfPlayer = pd.DataFrame(columns=columnNames)
 dataYPlayer = pd.DataFrame(columns=['win'])
 dataYPlayer = pd.Series(name="win")
 
@@ -72,10 +74,10 @@ for index, row in leagueList_toAnalyze.iterrows():
  
     ## Pull the ID field from the response data, cast it to an int
     thisLeagueID = row ['leagueId']
-    print(thisLeagueID)    
+    
     # entries is a dict 
     thisLeagueList  = requestLeagueInfo(region,thisLeagueID, APIKey)['entries']
-    
+    thisLeagueList = thisLeagueList[0:2]
     for summoner in thisLeagueList:
         
         print(summoner['summonerName'])
@@ -86,10 +88,10 @@ for index, row in leagueList_toAnalyze.iterrows():
         numMatches = len(matchList ['matches'])
         
         for iMatch in range(numMatches-1):
-        
+         
             # need to pause bc of rate limits for riotAPI
-            if iMatch == 50: 
-                time.sleep(180)
+            if iMatch%49 == 0 and iMatch != 0: 
+                time.sleep(121)
                 
             print( 'Get match'+ str(iMatch) )
             
@@ -104,8 +106,8 @@ for index, row in leagueList_toAnalyze.iterrows():
             
             
             if matchInfo['participants'][playerKey]['timeline']['role'] == 'DUO_SUPPORT':
-            
-                try: 
+                    
+                #try: 
                     statsDict = matchInfo['participants'][playerKey]['stats'] # get stats dict from this game
                     playerTeam = matchInfo['participants'][playerKey]['teamId']
                     
@@ -141,7 +143,8 @@ for index, row in leagueList_toAnalyze.iterrows():
                     else:
                         dataYPlayer.loc[counter_match] = 0
                     counter_match += 1
-                except:
-                    print ('Missing fields')
+                    print(counter_match)
+                #except:
+                #    print ('Missing fields')
         
-# dfPlayer.to_csv('output.csv')                    
+# dfPlayer.to_csv('output.csv', header=columnNames)                    
