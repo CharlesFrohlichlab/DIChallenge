@@ -12,7 +12,6 @@ import cassiopeia as cass
 from cassiopeia import Champion, Champions
 import pandas as pd
 import os
-#import dill
 
 ## Parameters
 summonerName = "Duvet Cover"
@@ -62,10 +61,6 @@ summonerData  = requestSummonerData(summonerName, APIKey)
 
 # Uncomment this line if you want a pretty JSON data dump
 #print(json.dumps(summonerData, sort_keys=True, indent=2))
-
-## Print to the console some basic account information
-#print("\n\nSummoner Name:\t" + str(summonerData ['name']))
-#print("Level:\t\t" + str(summonerData ['summonerLevel']))
 
 ## Pull the ID field from the response data, cast it to an int
 ID = summonerData ['id']
@@ -134,15 +129,32 @@ for iMatch in range(numMatches-1):
         except:
             print ('Missing fields')
 
+champMeanDf = pd.DataFrame(columns=columnNames)
+
 # calculate mean across matches for post-game metrics
 dfPlayer_shape = dfPlayer.shape    
+row_index_list = range(0,dfPlayer_shape[0]) # get range for all row indices
+column_list = columnNames[1:] # skip champ name column
+
+uniquePlayerChamps = dfPlayer.champion_name.unique()
+
+# dfPlayer.to_csv('player.csv', header=columnNames) 
+# dfPlayer = pd.read_csv("player.csv") 
 
 # take mean across continuous columns        
-column_list = columnNames[1:] # skip champ name column
-row_index_list = range(0,dfPlayer_shape[0])        
-matchMean = dfPlayer[column_list].iloc[row_index_list].mean(axis=0)
+for champ in uniquePlayerChamps:
+    tmp = dfPlayer.loc[dfPlayer['champion_name'] == champ]
+    champMean = tmp[column_list].mean(axis=0)
 
-# replace all rows of dfPlayer with mean
-for iRow in range(0,dfPlayer_shape[0]) : # 
-    dfPlayer.iloc[ iRow,2:] = matchMean
+    # replace all rows of dfPlayer with mean
+    for iRow in tmp.index : # 
+        dfPlayer.loc[iRow] = champMean.set_value('champion_name',champ)
        
+    
+    
+    
+    
+    
+    
+    
+    

@@ -232,6 +232,7 @@ for index, row in leagueList_toAnalyze.iterrows():
             except:
                 print ('Missing fields')
 
+# need to implement reload with testing if summoner already in list
 date = '20190717'            
 dfTop.to_csv('top_'+date+'.csv', header=columnNames)  
 dfJungle.to_csv('jung_'+date+'.csv', header=columnNames)

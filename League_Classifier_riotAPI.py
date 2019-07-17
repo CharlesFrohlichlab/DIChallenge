@@ -20,6 +20,8 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import altair as alt
+import pickle
 
 # use riotAPI_matchInfo for individual match info; riotAPI_avgMatchInfo to take avg across all matches for each sample
 from riotAPI_avgMatchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
@@ -101,6 +103,10 @@ from sklearn.metrics import accuracy_score
 print('Optimized logistic regression performance: ',
       round(accuracy_score(yTest,pred),5)*100,'%')
 
+# save the model to disk
+filename = 'final_logRegLoL.sav'
+pickle.dump(logOptimal, open(filename, 'wb'))
+
 #### examine contribution of variables to win
 
 numVars = len(columns_to_scale)
@@ -179,3 +185,27 @@ plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy 
 plt.ylabel('True positive rate')
 plt.xlabel('False positive rate')
 plt.show()
+
+######
+
+
+#columns2Keep.remove('champion_name')
+#
+#tmpData = dataX.drop('champion_name',axis=1).assign(Group='data')
+#tmpDataPlayer = dfPlayer.drop('champion_name',axis=1).assign(Group='player')
+#
+#allDataWithPlayer = tmpData.append(tmpDataPlayer, ignore_index=True)
+#
+#
+#groupedMean = allDataWithPlayer.groupby('Group').mean()
+#
+#normalized_df=(allDataWithPlayer-allDataWithPlayer.min())/(allDataWithPlayer.max()-allDataWithPlayer.min())
+#
+#dataMean = dataX.drop('champion_name',axis=1).mean(axis=0)
+#
+#
+#base = alt.Chart(tips, width=500, height=200).mark_bar().encode(
+#    alt.X('Date:T'),
+#    alt.Y('Close')
+#)
+#base
