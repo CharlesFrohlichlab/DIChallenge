@@ -92,12 +92,12 @@ parameters=[
     },
 ]
 
-logOptimal = GridSearchCV(LogisticRegression(), parameters, scoring='accuracy')
-logOptimal.fit(xTrain, yTrain)
+gs_model = GridSearchCV(LogisticRegression(), parameters, scoring='accuracy')
+gs_model.fit(xTrain, yTrain)
 print('Best parameters set:')
-print(logOptimal.best_params_)
+print(gs_model.best_params_)
 
-pred = logOptimal.predict(xTest)
+pred = gs_model.predict(xTest)
 
 from sklearn.metrics import accuracy_score
 print('Optimized logistic regression performance: ',
@@ -105,8 +105,8 @@ print('Optimized logistic regression performance: ',
 
 # save the model to disk
 filename = 'final_logRegLoL.sav'
-pickle.dump(logOptimal, open(filename, 'wb'))
-#logOptimal = pickle.load(open(filename, 'rb'))
+pickle.dump(gs_model, open(filename, 'wb'))
+#gs_model = pickle.load(open(filename, 'rb'))
 
 #### examine contribution of variables to win
 
@@ -139,7 +139,7 @@ plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=14)
 #### calculate model performance for test data
 
 ## calculate predicted probability
-#prob = logOptimal.predict_proba(xTest)[:,1]
+#prob = gs_model.predict_proba(xTest)[:,1]
 ## calculate true and false pos 
 #falsePos,truePos,thresh = roc_curve(yTest,prob)
 ##Calculate area under the curve
@@ -161,13 +161,13 @@ plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=14)
 
 #### Now predict game outcome for player data pulled from riot API
 
-pred = logOptimal.predict(processedPlayerX)
+pred = gs_model.predict(processedPlayerX)
 
 print('Optimized logistic regression performance: ',
       round(accuracy_score(dataYPlayer,pred),5)*100,'%')
 
 # calculate predicted probability
-prob = logOptimal.predict_proba(processedPlayerX)[:,1]
+prob = gs_model.predict_proba(processedPlayerX)[:,1]
 # calculate true and false pos 
 falsePos,truePos,thresh = roc_curve(dataYPlayer,prob)
 #Calculate area under the curve
@@ -182,12 +182,17 @@ plt.plot([0,1],ls='--')
 plt.plot([0,0],[1,0],c='.5')
 plt.plot([1,1],c='.5')
 
-plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy = ' + str(round(accuracy_score(dataYPlayer,pred),3)*100) + '%')
-plt.ylabel('True positive rate')
-plt.xlabel('False positive rate')
+plt.title('ROC Curve; AUC = ' + str(round(AUCscore,5)) + '; Model Test Accuracy = ' + str(round(accuracy_score(dataYPlayer,pred),3)*100) + '%',fontsize = 20)
+plt.ylabel('True positive rate',fontsize = 20)
+plt.xlabel('False positive rate',fontsize = 20)
+plt.yticks(fontsize=20)
+plt.xticks(fontsize=20)
 plt.show()
 
 ######
+
+tmpDf = pd.DataFrame(np.array([[1,10], [2,100],[3,50] ]),columns = ['var1','var2'])
+tmpNormDf=( df_2norm-df_2norm.min() )/( df_2norm.max()-df_2norm.min() )
 
 import plotly.graph_objects as go
 
@@ -203,7 +208,7 @@ normalized_df['Group']=allDataWithPlayer['Group']
 
 col2Group = columns2Keep[1:-1]
 justDataData = normalized_df.loc[normalized_df['Group'] == 'data']
-norm_dataMean = justDataData[0:75].mean(axis=0)
+norm_dataMean = justDataData[0:1000].mean(axis=0)
 norm_playerMean = normalized_df.loc[normalized_df['Group'] == 'player'].mean(axis=0)
 
 #################
