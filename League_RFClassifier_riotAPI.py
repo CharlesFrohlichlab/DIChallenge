@@ -32,6 +32,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score
 from sklearn.metrics import classification_report,confusion_matrix
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
 import warnings
 warnings.filterwarnings('ignore')
@@ -84,20 +85,21 @@ processedPlayerX = np.concatenate([scaled_columns_player, encodedColumns_Player]
 # from scikitlearn: split data into test and training sets
 xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random_state=42)
 
+encodedColumnsX = []; data =[]; encoded_columns =[]; processedX =[]; dataX_all =[];
+
 ###### Logistic regression
 
-params_lrc=[
-{
-    'penalty':['l1','l2'],
-    'C':[ 0.01, 0.1,1, 10],
-    'random_state':[0]
-    },
-]
-
+param_rfc = [{ 
+    'n_estimators': [200, 500],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth' : [6,15,20,25,30,35],
+    'criterion' :[ 'entropy']
+}]
 
 lrc=LogisticRegression()
+rfc=RandomForestClassifier()
 
-gs_model = GridSearchCV(lrc, params_lrc,  cv= 5, scoring='accuracy') 
+gs_model = BayesSearchCV(rfc, param_rfc, cv= 5, verbose=10) #
 gs_model.fit(xTrain, yTrain)
 print('Best parameters set:')
 print(gs_model.best_params_)
@@ -117,7 +119,7 @@ print('Optimized logistic regression performance: ',
 
 numVars = len(columns_to_scale)
 
-bestLR=LogisticRegression(C=1,penalty='l1',random_state=0)
+bestLR=RandomForestClassifier(gs_model.best_params_)
 bestLR.fit(xTrain, yTrain)
 
 logCoefs = bestLR.coef_

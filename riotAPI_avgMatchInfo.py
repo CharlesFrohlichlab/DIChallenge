@@ -16,8 +16,13 @@ import os
 summonerName = "Duvet Cover"
 APIKey = os.environ.get('League_API')
 
-if os.path.exists('player.csv'):
+if os.path.exists('player.csv') and os.path.exists('player_y.csv'):
     dfPlayer = pd.read_csv("player.csv") 
+    dataYPlayer = pd.read_csv("player_y.csv")
+    
+    # get rid of first index column (added by make_csv)
+    dfPlayer=dfPlayer.drop(dfPlayer.columns[0], axis=1)
+    dataYPlayer=dataYPlayer.drop(dataYPlayer.columns[0], axis=1)
 else:
     rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
     columnNames = ['champion_name','match_rank_score','max_time',
@@ -150,7 +155,7 @@ else:
             dfPlayer.loc[iRow] = champMean.set_value('champion_name',champ)
            
     dfPlayer.to_csv('player.csv', header=columnNames)    
-        
+    dataYPlayer.to_csv('player_y.csv', header=['win'])     
         
     
     
