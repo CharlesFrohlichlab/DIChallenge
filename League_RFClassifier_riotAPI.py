@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import altair as alt
 import pickle
+import dill
 
 # use riotAPI_matchInfo for individual match info; riotAPI_avgMatchInfo to take avg across all matches for each sample
 from riotAPI_avgMatchInfo import dfPlayer, dataYPlayer # IMPORTANT: separate script to pull data from RiotAPI for specific player data
@@ -99,22 +100,23 @@ param_rfc = [{
 lrc=LogisticRegression()
 rfc=RandomForestClassifier()
 
-gs_model = BayesSearchCV(rfc, param_rfc, cv= 5, verbose=10) #
+gs_model = BayesSearchCV(rfc, param_rfc, cv= 5,n_jobs=4, verbose=10) #
 gs_model.fit(xTrain, yTrain)
 print('Best parameters set:')
 print(gs_model.best_params_)
 
-pred = gs_model.predict(xTest)
-
 from sklearn.metrics import accuracy_score
+
+pred = gs_model.predict(xTest)
 print('Optimized logistic regression performance: ',
       round(accuracy_score(yTest,pred),5)*100,'%')
 
 # save the model to disk
-#filename = 'final_logRegLoL.sav'
-#pickle.dump(gs_model, open(filename, 'wb'))
+filename = 'I:\Documents\DataScienceProjects\LolPredict\final1_RFCLoL.sav'
+pickle.dump(gs_model, open(filename, 'wb'))
 #gs_model = pickle.load(open(filename, 'rb'))
-
+allVar_filename = 'I:\Documents\DataScienceProjects\LolPredict\allVar_RFCLoL1.sav'
+dill.dump_session(allVar_filename)
 #### examine contribution of variables to win
 
 numVars = len(columns_to_scale)
