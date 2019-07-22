@@ -13,6 +13,9 @@ Data from: https://github.com/DoransLab/data/tree/master/champion_clustering
 @author: Zhe Charles Zhou
 """
 
+#params
+role = 'supp'
+
 #### Import toolboxes
 
 import numpy as np
@@ -38,7 +41,8 @@ warnings.filterwarnings('ignore')
 
 #### Load data
 
-data=pd.read_csv("C:\\Users\\The Iron Maiden\\Documents\\DataScienceProjects\\totalSup.csv")
+data=pd.read_csv("I:\\Users\\The Iron Maiden\\Documents\\GitHub\\DIChallenge\\supp_playerDB.csv")
+data=data.drop(data.columns[0], axis=1)
 
 # make the column names reference-friendly
 data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
@@ -49,7 +53,9 @@ dataX_all=data.drop('win',axis=1)
 dataY=data['win']
 
 # define columns to analyze
-columns2Keep = ['champion_name','match_rank_score','max_time','gold_earned','wards_placed','damage_dealt_to_objectives','damage_dealt_to_turrets','kda','total_damage_dealt_to_champions', 'total_damage_taken', 'total_minions_killed']
+columns2Keep = ['champion_name','match_rank_score','max_time','goldearned','wardsplaced','damagedealttoobjectives',
+                'damagedealttoturrets','kda','totaldamagedealttochampions', 'totaldamagetaken', 'totalminionskilled',
+                'player'+role,'opp'+role]
 dataX = dataX_all[columns2Keep]
 
 # append player data for on hot encoding and scaling

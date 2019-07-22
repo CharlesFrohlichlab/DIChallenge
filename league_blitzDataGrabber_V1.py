@@ -84,12 +84,6 @@ if os.path.isfile(rootCsvPath + 'top_playerDB.csv') and os.path.isfile(rootCsvPa
     dfBot=pd.read_csv(rootCsvPath + 'adc_playerDB.csv')  
     dfSupp=pd.read_csv(rootCsvPath + 'supp_playerDB.csv')
     
-    dfTop=dfTop.drop(dfTop.columns[0], axis=1)
-    dfJungle=dfJungle.drop(dfJungle.columns[0], axis=1)    
-    dfMid=dfMid.drop(dfMid.columns[0], axis=1)
-    dfBot=dfBot.drop(dfBot.columns[0], axis=1)
-    dfSupp=dfSupp.drop(dfSupp.columns[0], axis=1)
-    
     topCounter = len(dfTop)
     jungCounter = len(dfJungle)
     midCounter = len(dfMid)
@@ -137,14 +131,14 @@ for index, row in leagueList_toAnalyze.iterrows():
             for iMatch in range(numMatches-1):
                 
                 # need to pause bc of rate limits for riotAPI
-                if iMatch%80 == 0 and iMatch != 0: 
+                if iMatch%60 == 0 and iMatch != 0: 
                     
                     time.sleep(121)
                     
                 print( 'Get match'+ str(iMatch) )
                 
                 try:
-                
+                    
                     matchID = matchList ['matches'][iMatch]['gameId'] # get this match's ID
                     
                     matchInfo = requestMatchInfo(region,matchID, APIKey) # pull this game's info from riotAPI
@@ -153,8 +147,13 @@ for index, row in leagueList_toAnalyze.iterrows():
                     game_version = matchInfo['gameVersion']
                     
                     # find index of player in player list
-                    for i in range( len(matchInfo['participantIdentities'])-1 ):
-                        if matchInfo['participantIdentities'][i]['player']['accountId'] == acctID:
+                    for i in range( len(matchInfo['participantIdentities']) ):
+                        thisParticipant = matchInfo['participantIdentities'][i]['player']
+                        if 'currentAccountId' in thisParticipant:
+                            playerAcctId = thisParticipant['currentAccountId']
+                        else:
+                            playerAcctId = thisParticipant['accountId']
+                        if playerAcctId == acctID:
                             playerKey = i
           
                  
@@ -173,7 +172,7 @@ for index, row in leagueList_toAnalyze.iterrows():
                     thisChampionID = matchInfo['participants'][playerKey]['championId']
                     tfIndex = dfChampNames['champion_ID'] == thisChampionID
                     champName =  dfChampNames[tfIndex]['champion_name'].item()
-                    
+    
                     # figure out player's match rank
                     if 'highestAchievedSeasonTier' not in matchInfo['participants'][playerKey]:
                         thisRank = 'Unranked'
@@ -186,7 +185,7 @@ for index, row in leagueList_toAnalyze.iterrows():
                     lane = matchInfo['participants'][playerKey]['timeline']['lane']
                     teamID = matchInfo['participants'][playerKey]['teamId'] 
                     
-                    
+                    champRepo = []
                     for iParticipant in range(0,10):
                         thisRole = matchInfo['participants'][iParticipant]['timeline']['role']
                         thisLane = matchInfo['participants'][iParticipant]['timeline']['lane']
@@ -195,7 +194,9 @@ for index, row in leagueList_toAnalyze.iterrows():
                         thisPlayerChampionID = matchInfo['participants'][iParticipant]['championId']
                         champIndex = dfChampNames['champion_ID'] == thisPlayerChampionID
                         thisChampName =  dfChampNames[champIndex]['champion_name'].item()
-                        
+                 
+                        champRepo.append(thisChampName)
+                    
                         tmpID = "{}_{}".format(thisRole,thisLane)
                         
                         if tmpID == 'SOLO_TOP' and thisTeamID == teamID: 
@@ -218,6 +219,8 @@ for index, row in leagueList_toAnalyze.iterrows():
                             oppADC = thisChampName
                         elif tmpID == 'DUO_SUPPORT_BOTTOM' and thisTeamID != teamID: 
                             oppSupp = thisChampName
+                    if champName not in champRepo:
+                        pass
                     ############ put data together 
         
                     
@@ -244,18 +247,22 @@ for index, row in leagueList_toAnalyze.iterrows():
                         dfTop.loc[topCounter] = addVector
                         topCounter += 1
                         print('Top#: ' + str(topCounter))
+                              
                     elif role == 'NONE' and lane == 'JUNGLE':    
                         dfJungle.loc[jungCounter] = addVector
                         jungCounter += 1
                         print('Jung#: ' + str(jungCounter))
+                              
                     elif role == 'SOLO' and lane == 'MIDDLE':    
                         dfMid.loc[midCounter] = addVector
                         midCounter += 1
                         print('Mid#: ' + str(midCounter))
+                              
                     elif role == 'DUO_CARRY':    
                         dfBot.loc[botCounter] = addVector
                         botCounter += 1
                         print('Bot#: ' + str(botCounter))
+                              
                     elif role == 'DUO_SUPPORT':    
                         dfSupp.loc[suppCounter] = addVector 
                         suppCounter += 1
@@ -264,9 +271,22 @@ for index, row in leagueList_toAnalyze.iterrows():
                 except:
                     print ('Missing fields')
 
-# need to implement reload with testing if summoner already in list         
-dfTop.to_csv('top_playerDB.csv', header=columnNames)  
-dfJungle.to_csv('jung_playerDB.csv', header=columnNames)
-dfMid.to_csv('mid_playerDB.csv', header=columnNames)
-dfBot.to_csv('adc_playerDB.csv', header=columnNames)
-dfSupp.to_csv('supp_playerDB.csv', header=columnNames)               
+postprocessing = 0
+if postprocessing == 1:
+    for index,row in dfSupp.iterrows():
+        thisRow_champName = row['champion_name']
+        thisRow_playerRole = row['playerSupp'] 
+       
+        if thisRow_champName != thisRow_playerRole:
+    #        print(thisRow_champName)
+    #        print(thisRow_playerJung)
+    #        print('')
+    #        print(index)
+            dfSupp = dfSupp.drop(index)
+
+    # need to implement reload with testing if summoner already in list         
+    dfTop.to_csv('top_playerDB.csv', header=columnNames, index=False)  
+    dfJungle.to_csv('jung_playerDB.csv', header=columnNames, index=False)
+    dfMid.to_csv('mid_playerDB.csv', header=columnNames, index=False)
+    dfBot.to_csv('adc_playerDB.csv', header=columnNames, index=False)
+    dfSupp.to_csv('supp_playerDB.csv', header=columnNames, index=False)               

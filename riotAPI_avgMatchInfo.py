@@ -15,6 +15,7 @@ import os
 ## Parameters
 summonerName = "Duvet Cover"
 APIKey = os.environ.get('League_API')
+role = 'supp'
 
 if os.path.exists('player.csv') and os.path.exists('player_y.csv'):
     dfPlayer = pd.read_csv("player.csv") 
@@ -25,10 +26,10 @@ if os.path.exists('player.csv') and os.path.exists('player_y.csv'):
     dataYPlayer=dataYPlayer.drop(dataYPlayer.columns[0], axis=1)
 else:
     rankNames = ['BRONZE',  'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTERS', 'CHALLENGER']
-    columnNames = ['champion_name','match_rank_score','max_time',
-                                'gold_earned','wards_placed','damage_dealt_to_objectives',
-                                'damage_dealt_to_turrets','kda',
-                                'total_damage_dealt_to_champions', 'total_damage_taken', 'total_minions_killed']
+    columnNames = ['champion_name','match_rank_score','max_time','goldearned','wardsplaced','damagedealttoobjectives',
+                'damagedealttoturrets','kda','totaldamagedealttochampions', 'totaldamagetaken', 'totalminionskilled',
+                'player'+role,'opp'+role]
+                 
     dfPlayer = pd.DataFrame(columns=columnNames)
     dataYPlayer = pd.DataFrame(columns=['win'])
     dataYPlayer = pd.Series(name="win")
