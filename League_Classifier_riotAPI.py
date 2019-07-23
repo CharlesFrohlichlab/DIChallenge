@@ -55,7 +55,7 @@ dataY=data['win']
 # define columns to analyze
 columns2Keep = ['champion_name','match_rank_score','max_time','goldearned','wardsplaced','damagedealttoobjectives',
                 'damagedealttoturrets','kda','totaldamagedealttochampions', 'totaldamagetaken', 'totalminionskilled',
-                'player'+role,'opp'+role]
+                'opp'+role]
 dataX = dataX_all[columns2Keep]
 
 # append player data for on hot encoding and scaling
@@ -64,27 +64,33 @@ numPlayerSamps = dfPlayer.shape[0]
 ###### Logistic regression Data Preprocessing
 
 # Define which columns should be encoded vs scaled
-columns_to_encode = ['champion_name']
-columns_to_scale  = columns2Keep[1:]
+columns_to_encode_champName = ['champion_name']
+columns_to_encode_oppChamp = ['opp'+role]
+columns_to_scale  = columns2Keep[1:-1]
 # we're going to encode the categorical data together (dataX + player) since we might find new champions in the player data
-dataToEncode_plusPlayer = dataX[columns_to_encode].append(dfPlayer[columns_to_encode])
+toEncode_champName_plusPlayer = dataX[columns_to_encode_champName].append(dfPlayer[columns_to_encode_champName])
+toEncode_oppChamp_plusPlayer = dataX[columns_to_encode_oppChamp].append(dfPlayer[columns_to_encode_oppChamp])
 
 # Instantiate encoder/scaler
 scaler = StandardScaler()
 ohe    = OneHotEncoder(sparse=False)
 # Scale and Encode the continuous and categorical data separately
 scaled_columnsX  = scaler.fit_transform(dataX[columns_to_scale]) 
-encoded_columns =    ohe.fit_transform(dataToEncode_plusPlayer)
+encoded_playerChamp =    ohe.fit_transform(toEncode_champName_plusPlayer)
+encoded_oppChamp =    ohe.fit_transform(toEncode_oppChamp_plusPlayer)
 
 scaled_columns_player  = scaler.transform(dfPlayer[columns_to_scale]) 
 
 # IMPORTANT: split appended player data off after one hot encoding 
-encodedColumnsX = encoded_columns[:-numPlayerSamps,:]
-encodedColumns_Player = encoded_columns[-numPlayerSamps:,:]
+encoded_champName_X = encoded_playerChamp[:-numPlayerSamps,:]
+encoded_champName_player = encoded_playerChamp[-numPlayerSamps:,:]
+
+encoded_oppChamp_X = encoded_oppChamp[:-numPlayerSamps,:]
+encoded_oppChamp_player = encoded_oppChamp[-numPlayerSamps:,:]
 
 # Concatenate (Column-Bind) Processed Columns Back Together
-processedX = np.concatenate([scaled_columnsX, encodedColumnsX], axis=1)
-processedPlayerX = np.concatenate([scaled_columns_player, encodedColumns_Player], axis=1)
+processedX = np.concatenate([scaled_columnsX, encoded_champName_X,encoded_oppChamp_X], axis=1)
+processedPlayerX = np.concatenate([scaled_columns_player, encoded_champName_player,encoded_oppChamp_player], axis=1)
 
 
 # from scikitlearn: split data into test and training sets
