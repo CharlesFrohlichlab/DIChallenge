@@ -136,10 +136,10 @@ sortedInds = np.argsort(-logCoefs_abs[0,0:numVars])
 
 plt.figure(figsize=(10,5))
 plt.bar(columns_to_scale[0:numVars],logCoefs_absSort)
-plt.ylabel('Coefficient Score (Impact)', fontsize=14)
-plt.xticks(np.arange(numVars), [x_labels[i] for i in sortedInds], rotation = 45, fontsize=13 ) # need to reorder x labels according to sorting of coeffs
-plt.yticks(fontsize=13)
-plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=14)
+plt.ylabel('Coefficient Score (Impact)', fontsize=19)
+plt.xticks(np.arange(numVars), [x_labels[i] for i in sortedInds], rotation = 45, fontsize=17 ) # need to reorder x labels according to sorting of coeffs
+plt.yticks(fontsize=17)
+plt.title('Player Metrics Sorted by Impact on Win/Loss', fontsize=22)
 
 #### calculate model performance for test data
 
