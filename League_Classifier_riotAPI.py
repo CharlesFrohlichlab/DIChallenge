@@ -36,13 +36,13 @@ from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_scor
 from sklearn.metrics import classification_report,confusion_matrix
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.model_selection import learning_curve
 import warnings
 warnings.filterwarnings('ignore')
 
 #### Load data
 
-data=pd.read_csv("I:\\Users\\The Iron Maiden\\Documents\\GitHub\\DIChallenge\\supp_playerDB.csv")
-data=data.drop(data.columns[0], axis=1)
+data=pd.read_csv("C:\\Users\\The Iron Maiden\\Documents\\DataScienceProjects\\supp_playerDB_cleaned.csv")
 
 # make the column names reference-friendly
 data.columns = data.columns.str.strip().str.lower().str.replace(' ', '_')
@@ -60,7 +60,7 @@ dataX = dataX_all[columns2Keep]
 
 # append player data for on hot encoding and scaling
 numPlayerSamps = dfPlayer.shape[0]
-
+dfPlayer = dfPlayer.drop('playersupp',axis=1)
 ###### Logistic regression Data Preprocessing
 
 # Define which columns should be encoded vs scaled
@@ -74,10 +74,19 @@ toEncode_oppChamp_plusPlayer = dataX[columns_to_encode_oppChamp].append(dfPlayer
 # Instantiate encoder/scaler
 scaler = StandardScaler()
 ohe    = OneHotEncoder(sparse=False)
+ohe_opp    = OneHotEncoder(sparse=False)
 # Scale and Encode the continuous and categorical data separately
 scaled_columnsX  = scaler.fit_transform(dataX[columns_to_scale]) 
+filename = 'scaler_lolpredict.sav'
+#pickle.dump(scaler, open(filename, 'wb'))
+
 encoded_playerChamp =    ohe.fit_transform(toEncode_champName_plusPlayer)
-encoded_oppChamp =    ohe.fit_transform(toEncode_oppChamp_plusPlayer)
+filename = 'ohe_lolpredict.sav'
+#pickle.dump(ohe, open(filename, 'wb'))
+
+encoded_oppChamp =    ohe_opp.fit_transform(toEncode_oppChamp_plusPlayer)
+filename = 'oheOpp_lolpredict.sav'
+#pickle.dump(ohe_opp, open(filename, 'wb'))
 
 scaled_columns_player  = scaler.transform(dfPlayer[columns_to_scale]) 
 
@@ -101,11 +110,10 @@ xTrain,xTest,yTrain,yTest=train_test_split(processedX,dataY,test_size=0.2,random
 params_lrc=[
 {
     'penalty':['l1','l2'],
-    'C':[ 0.01, 0.1,1, 10],
+    'C':[ 0.1,0.5,1,1.5, 2, 3, 4],
     'random_state':[0]
     },
 ]
-
 
 lrc=LogisticRegression()
 
@@ -134,7 +142,7 @@ bestLR.fit(xTrain, yTrain)
 
 logCoefs = bestLR.coef_
 
-x_labels = ['Rank','MaxTime','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg', 'dmgTaken', 'minion#','percDmgTaken']
+x_labels = ['Rank','MaxTime','Gold','Wards','ObjDmg','TurretDmg','KDA','ChampDmg', 'dmgTaken', 'minion#']
 plt.bar(columns_to_scale[0:numVars],logCoefs[0,0:numVars])
 plt.ylabel('Coef Score')
 plt.xticks(np.arange(numVars), x_labels, rotation = 45, fontsize=13 )
@@ -206,20 +214,68 @@ plt.yticks(fontsize=20)
 plt.xticks(fontsize=20)
 plt.show()
 
-######
+################### plot learning curve
 
-tmpDf = pd.DataFrame(np.array([[1,10], [2,100],[3,50] ]),columns = ['var1','var2'])
-tmpNormDf=( df_2norm-df_2norm.min() )/( df_2norm.max()-df_2norm.min() )
+def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
+                        n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
+    """
+    Generate a simple plot of the test and training learning curve.
+
+    Check: https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html for details
+
+    """
+    plt.figure()
+    plt.title(title, fontsize = 20)
+    if ylim is not None:
+        plt.ylim(*ylim)
+    plt.xlabel("Training examples", fontsize = 20)
+    plt.ylabel("Score", fontsize = 20)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    plt.grid()
+
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+             label="Training score")
+    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+             label="Cross-validation score")
+
+    plt.legend(loc="best")
+    plt.yticks(fontsize=15)
+    plt.xticks(fontsize=15)
+    return plt
+
+from sklearn.model_selection import ShuffleSplit
+
+title = "Learning Curves (Logistic Regression Classifier)"
+# Cross validation with 100 iterations to get smoother mean test and train
+# score curves, each time with 20% data randomly selected as a validation set.
+cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
+
+plot_learning_curve(lrc, title, xTrain, yTrain, ylim=(0.75, 0.95), cv=cv, n_jobs=4)
+
+plt.show()
+
+################### process data and plot radarplot
 
 import plotly.graph_objects as go
+from plotly.offline import plot
 
 # append column for data group
-tmpData = dataX.drop('champion_name',axis=1).assign(Group='data')
-tmpDataPlayer = dfPlayer.drop('champion_name',axis=1).assign(Group='player')
+tmpData = dataX.drop('champion_name',axis=1).drop('oppsupp',axis=1).assign(Group='data')
+tmpDataPlayer = dfPlayer.drop('champion_name',axis=1).drop('oppsupp',axis=1).assign(Group='player')
 allDataWithPlayer = tmpData.append(tmpDataPlayer, ignore_index=True)
 
 # normalize (0-1) ccontinuous data and add back on group
-df_2norm = allDataWithPlayer.iloc[:,1:-1]
+df_2norm = allDataWithPlayer.iloc[:,1:-1] # .drop('oppsupp',axis=1).drop('playersupp',axis=1).drop('Group',axis=1)
 normalized_df=( df_2norm-df_2norm.min() )/( df_2norm.max()-df_2norm.min() )
 normalized_df['Group']=allDataWithPlayer['Group']
 
@@ -228,8 +284,9 @@ justDataData = normalized_df.loc[normalized_df['Group'] == 'data']
 norm_dataMean = justDataData[0:1000].mean(axis=0)
 norm_playerMean = normalized_df.loc[normalized_df['Group'] == 'player'].mean(axis=0)
 
-#################
+######
 
+# for displaying plotly in spyder: https://community.plot.ly/t/plotly-for-spyder/10527/3
 categories = columns2Keep[1:-1]
 
 fig = go.Figure()
@@ -259,5 +316,68 @@ fig.update_layout(
 # fig.show()
 plot(fig, auto_open=True)
 
+
+######### plotly bar chart
+
+topThreeFeatures = [columns_to_scale[i] for i in sortedInds][:3]
+
+topThreePlayer = dfPlayer[topThreeFeatures].mean(axis=0)
+topThreeData = dataX[topThreeFeatures].mean(axis=0)
+
+topThreeAll = allDataWithPlayer[topThreeFeatures].mean(axis=0)
+stdDevThree_player = allDataWithPlayer[topThreeFeatures].std(axis=0)/2
+ylimLow = topThreeAll - stdDevThree_player
+ylimHigh = topThreeAll + stdDevThree_player 
+
+xLabels=['Your Performance', 'Average Player']
+
+from plotly.subplots import make_subplots
+
+fig = make_subplots(rows=1, cols=3)
+
+for i in range(3):
+
+    fig.add_trace(
+        go.Bar(name=topThreeFeatures[i], x=xLabels, y=[topThreePlayer[i],topThreeData[i]]),
+        row=1, col=i+1
+    )
+    
+    
+fig.update_layout(height=600, width=800, title_text="Subplots")
+fig.show()
+plot(fig, auto_open=True)
+
+############ 
+
+import matplotlib.pyplot as plt
+
+
+tmpTitles = ['Kill/Death/Assist Ratio', 'Gold Earned', 'Damage to Turrets']
+tmpYlab = ['KDA Ratio','Gold','Damage Units']
+tmpYlim = [ [0,5.5],[6000,9000],[1000,1700] ]
+fig2, axs = plt.subplots(1, 3,figsize=(16,4))
+
+x_pos = np.arange(len(xLabels))
+
+for i in range(3):
+
+    axs[i].bar(x_pos[0], topThreePlayer[i], align='center', alpha=0.8)
+    axs[i].bar(x_pos[1], topThreeData[i], align='center', alpha=0.8)
+    axs[i].set_title(tmpTitles[i], fontsize = 20)
+    axs[i].set_ylabel(tmpYlab[i], fontsize = 15)
+    axs[i].set_ylim(tmpYlim[i])
+    
+    axs[i].set_xticks(x_pos)
+    axs[i].set_xticklabels(xLabels, rotation=0, fontsize=15)
+   
+
+    
+fig2.show()
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from io import BytesIO,StringIO
+
+buff = BytesIO()
+plt.savefig(buff, format='png', dpi=180)
+buff.seek(0)
 
 
